@@ -37,6 +37,7 @@ python app/server.py        # http://localhost:5180  (윈도우: start-dashboard
 - 「API 키 설정」(우측 상단): Anthropic API 키(분석용, CLI 로그인이 없을 때)와 Apify 토큰을 등록한다 → `.env`(커밋 금지).
 - 「수집 키워드」: 고객 채널별 국내·해외 키워드를 추천(`app/keyword_suggestions.json`)에서 더하거나 직접 입력·삭제 후 저장 → `reels/config.json`.
 - 모든 작업은 단계 표시·진행 막대·경과/남은 시간(분·초)을 보여 준다. 예상 시간은 `reels/data/job_stats.json` 의 최근 실제 소요 시간으로 보정된다.
+- 「분석 모델」(우측 상단): Claude(Fable·Opus·Sonnet·Haiku) 또는 ChatGPT(GPT-6 계열 등)를 고르고 건당 가격을 본다. 목록·단가는 `app/models.json`. Claude 는 CLI(`app/llm_claude.py`), ChatGPT 는 OpenAI API(`app/llm_openai.py`, 키 필요)로 실행하며, 실행마다 실제 비용을 기록해 다음 예상가에 반영한다.
 - 「주간 주제 리서치」 탭: `work/out/cand_*.json` 후보와 확정 CSV를 표로 본다.
 - 설치: `pip install "yt-dlp[default,curl-cffi]"` (틱톡은 curl-cffi 필요) + ffmpeg.
 

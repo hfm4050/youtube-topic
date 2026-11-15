@@ -142,10 +142,10 @@ def record(key, sec):
     json.dump(d, open(STATS, 'w', encoding='utf-8'))
 
 
-def step(label, argv, key=None, est=None, units=0, unit_re=None, env=None):
+def step(label, argv, key=None, est=None, units=0, unit_re=None, env=None, cost_key=None):
     """작업 단계. units·unit_re 가 있으면 출력 줄 수로 진행률을 세고, 없으면 예상 시간으로 추정한다."""
     return {'label': label, 'argv': argv, 'key': key, 'est': est or est_for(key), 'units': units,
-            'unit_re': unit_re, 'env': env, 'done_units': 0, 'state': 'todo', 'took': None}
+            'unit_re': unit_re, 'env': env, 'done_units': 0, 'state': 'todo', 'took': None, 'cost': None, 'cost_key': cost_key}
 
 
 def run_job(kind, steps, ref=None, stop_on_error=True):
@@ -164,6 +164,12 @@ def run_job(kind, steps, ref=None, stop_on_error=True):
                                      stdin=subprocess.DEVNULL, text=True, encoding='utf-8', errors='replace')
                 for line in p.stdout:
                     job['log'] = (job['log'] + line)[-12000:]
+                    if line.startswith('COST_JSON '):   # LLM 래퍼가 찍는 건당 비용
+                        try:
+                            st['cost'] = json.loads(line[10:])
+                        except ValueError:
+                            pass
+                        job['log'] = job['log'][:-len(line)]
                     if rx and rx.search(line):
                         st['done_units'] += 1
                 rc = p.wait()
@@ -173,6 +179,8 @@ def run_job(kind, steps, ref=None, stop_on_error=True):
             st['took'] = time.time() - job['step_started']
             if rc == 0:
                 st['state'] = 'done'
+                if st['cost_key'] and st['cost'] and st['cost'].get('usd') is not None:
+                    record('cost:' + st['cost_key'], st['cost']['usd'])
                 if st['key'] and not st['units']:
                     record(st['key'], st['took'])
                 elif st['key'] and st['done_units']:
@@ -220,7 +228,8 @@ def job_view(job):
             'elapsed': round(now - job['started']), 'progress': 1 if job['status'] == 'done' else round(done / total, 3) if total else 0,
             'eta': 0 if fin else (None if over and len(steps) - job['cur'] == 1 else round(eta)), 'over': over and not fin,
             'steps': [{'label': st['label'], 'state': st['state'], 'units': st['units'], 'done_units': st['done_units'],
-                       'took': round(st['took']) if st['took'] else None} for st in steps]}
+                       'took': round(st['took']) if st['took'] else None, 'cost': st['cost']} for st in steps],
+            'cost_usd': round(sum((st['cost'] or {}).get('usd') or 0 for st in steps), 4) if any(st['cost'] for st in steps) else None}
 
 
 def clean_env():
@@ -240,7 +249,7 @@ def claude_logged_in():
         return False
 
 
-KEYS = {'APIFY_TOKEN': r'[\w\-~.]{10,200}', 'ANTHROPIC_API_KEY': r'sk-ant-[\w\-]{20,300}'}
+KEYS = {'APIFY_TOKEN': r'[\w\-~.]{10,200}', 'ANTHROPIC_API_KEY': r'sk-ant-[\w\-]{20,300}', 'OPENAI_API_KEY': r'sk-(?!ant-)[\w\-]{20,300}'}
 
 
 def yt_query_count(c, fit, region):
@@ -258,11 +267,53 @@ def py(*args):
     return [sys.executable, *args]
 
 
-def claude_cmd(prompt):
-    exe = shutil.which('claude')
-    if not exe:
+def models_cfg():
+    return json.load(open(os.path.join(APP, 'models.json'), encoding='utf-8'))
+
+
+_cli = {'at': 0, 'ok': False}
+def claude_ready():
+    """Claude 를 쓸 수 있나: CLI 로그인(60초 캐시) 또는 등록한 Anthropic API 키."""
+    if ENV.get('ANTHROPIC_API_KEY'):
+        return True
+    if time.time() - _cli['at'] > 60:
+        _cli.update(at=time.time(), ok=claude_logged_in())
+    return _cli['ok']
+
+
+def models_view():
+    """모델 목록 + 단계별 건당 예상 비용(실측 평균이 있으면 그것, 없으면 가정 토큰 × 단가)."""
+    c = models_cfg()
+    try:
+        hist = json.load(open(STATS, encoding='utf-8'))
+    except (OSError, ValueError):
+        hist = {}
+    ready = {'claude': claude_ready(), 'openai': bool(ENV.get('OPENAI_API_KEY'))}
+    out = []
+    for m in c['models']:
+        per = {}
+        for st, (tin, tout) in c['assumed_tokens'][m['engine']].items():
+            h = hist.get(f"cost:{m['id']}:{st}") or []
+            per[st] = {'usd': round(sum(h) / len(h), 4) if h else round((tin * m['in'] + tout * m['out']) / 1e6, 4), 'measured': len(h)}
+        out.append({**m, 'ready': ready[m['engine']], 'per': per})
+    return {'models': out, 'default': c['default'], 'usd_krw': c.get('usd_krw'), 'checked': c.get('checked'),
+            'claude_billing': 'api' if ENV.get('ANTHROPIC_API_KEY') else 'subscription'}
+
+
+def llm_step(label, stepname, rid, fit, model):
+    m = next((x for x in models_cfg()['models'] if x['id'] == model), None)
+    if not m:
+        raise RuntimeError('알 수 없는 모델입니다.')
+    ck = f'{model}:{stepname}'
+    if m['engine'] == 'openai':
+        if not ENV.get('OPENAI_API_KEY'):
+            raise RuntimeError('ChatGPT(OpenAI) API 키가 없습니다. 오른쪽 위 「API 키 설정」에서 등록해 주세요.')
+        argv = py('app/llm_openai.py', stepname, rid, '--model', model) + (['--fit', fit] if fit else [])
+        return step(f"{label} · {m['label']}", argv, key=f'{stepname}@openai', est=est_for(f'{stepname}@openai', 90), cost_key=ck)
+    if not shutil.which('claude'):
         raise RuntimeError('claude CLI 를 찾지 못했습니다 (Claude Code 설치 필요).')
-    return [exe, '-p', prompt, '--permission-mode', 'acceptEdits', '--allowedTools', 'Read,Write,Edit,Glob,Grep']
+    argv = py('app/llm_claude.py', '--model', model, '--prompt', step_prompt(stepname, rid, fit))
+    return step(f"{label} · {m['label']}", argv, key=stepname, env=clean_env(), cost_key=ck)
 
 
 def step_prompt(step, rid, fit):
@@ -328,6 +379,8 @@ class H(BaseHTTPRequestHandler):
                                    'apify': bool(ENV.get('APIFY_TOKEN')), 'claude': bool(shutil.which('claude')),
                                    'suggest': {k: v for k, v in json.loads(read(os.path.join(APP, 'keyword_suggestions.json'), '{}') or '{}').items() if not k.startswith('_')},
                                    'instagram': {'': ig_settings(c, None), **{ch: ig_settings(c, ch) for ch in c['channels']}}})
+        if path == '/api/models':
+            return self.send(200, models_view())
         if path == '/api/keys':
             return self.send(200, {'keys': {k: bool(ENV.get(k)) for k in KEYS}, 'claude_cli': claude_logged_in(), 'claude_installed': bool(shutil.which('claude'))})
         if path == '/api/weekly':
@@ -384,7 +437,7 @@ class H(BaseHTTPRequestHandler):
                 if not rid or stepname not in STEP_FILE:
                     return self.send(400, {'error': '잘못된 요청'})
                 label = {'analysis': '화면·대본 분석', 'scripts5': '대본 5개 작성', 'plan': '제작 기획 작성'}[stepname]
-                job = run_job(stepname, [step(label, claude_cmd(step_prompt(stepname, rid, fit)), key=stepname, env=clean_env())], rid)
+                job = run_job(stepname, [llm_step(label, stepname, rid, fit, body.get('model') or models_cfg()['default'])], rid)
                 return self.send(200, {'job': job['id'], 'ref': rid})
             if path == '/api/keys':  # 토큰·API 키 등록/삭제 (.env — 값은 화면에 되돌려 주지 않는다)
                 for k, pat in KEYS.items():
