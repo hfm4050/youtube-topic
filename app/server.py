@@ -9,7 +9,7 @@
   - 분석·대본·기획:  claude -p (ref-analyze 스킬의 ②③④) → reels/data/analysis/<id>/*.md
 업로드는 하지 않는다. 의료·보험 문구는 사람이 검수한다.
 """
-import argparse, csv, glob, json, mimetypes, os, re, shutil, subprocess, sys, threading, time, urllib.request, uuid
+import argparse, csv, glob, json, mimetypes, os, re, shutil, subprocess, sys, threading, time, urllib.parse, urllib.request, uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import unquote, urlparse
 
@@ -455,20 +455,62 @@ def step_prompt(step, rid, fit):
 
 
 # ---------------- 주간 63개 주제 ----------------
+# ---------------- 벤치마크 근거: 수치 확인 · 출처 링크 ----------------
+RE_URL = re.compile(r'https?://[^\s)\]>\'"]+')
+RE_HOST = re.compile(r'(?<![\w.@/])((?:[a-z0-9-]+\.)+(?:co\.kr|go\.kr|or\.kr|com|net|org|kr|io|news))(/[^\s)\]>\'"]*)?', re.I)
+RE_QUOTE = re.compile(r'[\'‘“"「『]([^\'’”"」』\n]{5,60})[\'’”"」』]')
+NUM = r'(\d{1,3}(?:,\d{3})+|\d{3,}|\d[\d.]*\s*(?:만|억))'
+RE_VIEWS = re.compile(r'(?:조회수?|재생수?|views?)\D{0,8}' + NUM + r'|' + NUM + r'\s*(?:회|뷰)(?![가-힣])', re.I)
+RE_ENGAGE = re.compile(r'(?:좋아요|추천수?|댓글수?|likes?|comments?)\D{0,8}' + NUM + r'|' + NUM + r'\s*(?:likes?|comments?)', re.I)
+_first = lambda m: next((g for g in m.groups() if g), '').strip()
+
+
+def evidence_view(text):
+    """근거 문장에서 조회·참여 수치와 출처를 뽑는다.
+    verified = 조회수 수치와 좋아요/댓글 수치가 모두 있는 것(=실제로 터진 영상이 확인된 근거)."""
+    text = (text or '').strip()
+    plain = RE_URL.sub(' ', text)                      # 주소 안의 숫자를 수치로 착각하지 않게
+    views = [_first(m) for m in RE_VIEWS.finditer(plain)][:3]
+    engage = [_first(m) for m in RE_ENGAGE.finditer(plain)][:3]
+    srcs, seen = [], set()
+
+    def add(label, url):
+        if url not in seen and len(srcs) < 4:
+            seen.add(url)
+            srcs.append({'label': label[:48], 'url': url})
+
+    for u in RE_URL.findall(text):
+        add(re.sub(r'^www\.', '', urllib.parse.urlsplit(u).netloc) or u, u)
+    for host, path in RE_HOST.findall(text):
+        add(re.sub(r'^www\.', '', host), 'https://' + host + (path or ''))
+    for q in RE_QUOTE.findall(text):
+        add(q, 'https://www.google.com/search?q=' + urllib.parse.quote(q))
+    if not srcs and text:
+        add('출처 검색', 'https://www.google.com/search?q=' + urllib.parse.quote(' '.join(text.split()[:8])))
+    return {'text': text, 'sources': srcs, 'views': views, 'engage': engage,
+            'verified': bool(views and engage)}
+
+
 def weekly():
     out = {'channels': {}, 'csv': None, 'hooks': read(os.path.join(WORK_OUT, 'prev_hooks.md'))}
     for g in ('beauty', 'medical', 'life'):
         p = os.path.join(WORK_OUT, f'cand_{g}.json')
         if os.path.exists(p):
             try:
-                out['channels'].update(json.load(open(p, encoding='utf-8')))
+                d = json.load(open(p, encoding='utf-8'))
+                for items in d.values():
+                    for it in items:
+                        it['_ev'] = evidence_view(it.get('벤치마크 근거'))
+                out['channels'].update(d)
             except ValueError:
                 pass
     csvs = sorted(glob.glob(os.path.join(WORK_OUT, '전체7개채널_63개주제_*.csv')))
     if csvs:
         with open(csvs[-1], encoding='utf-8-sig', newline='') as f:
             rows = list(csv.reader(f))
-        out['csv'] = {'name': os.path.basename(csvs[-1]), 'header': rows[0], 'rows': rows[1:]}
+        i_ev = rows[0].index('벤치마크 근거') if '벤치마크 근거' in rows[0] else 7
+        out['csv'] = {'name': os.path.basename(csvs[-1]), 'header': rows[0], 'rows': rows[1:], 'ev_col': i_ev,
+                      'ev': [evidence_view(r[i_ev] if len(r) > i_ev else '') for r in rows[1:]]}
     return out
 
 

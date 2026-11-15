@@ -163,12 +163,17 @@
       "kr": [
         "병원 마케팅 유튜브 쇼츠",
         "AI 마케팅 자동화 클로드",
-        "릴스 조회수 올리는 법"
+        "릴스 조회수 올리는 법",
+        "AI마케팅",
+        "AEO GEO",
+        "유튜브"
       ],
       "global": [
         "healthcare marketing tips shorts",
         "claude ai content automation shorts",
-        "instagram reels growth strategy"
+        "instagram reels growth strategy",
+        "AEO GEO",
+        "youtube"
       ],
       "instagram": {
         "accounts": {
@@ -193,12 +198,8 @@
       },
       "tiktok": {
         "keywords": {
-          "GLOBAL": [
-            "healthcare marketing tips shorts"
-          ],
-          "KR": [
-            "병원 마케팅 유튜브 쇼츠"
-          ]
+          "GLOBAL": [],
+          "KR": []
         }
       }
     }
