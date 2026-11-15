@@ -66,6 +66,7 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--ac);outlin
 .ref .b{padding:12px 14px 14px;display:flex;flex-direction:column;gap:4px;flex:1}
 .ref .k{font-size:12px;color:var(--sub)}
 .ref .t{font-weight:700;font-size:14.5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.9em}
+.ref .ko{font-size:12.5px;color:#3B4654;background:#F1F4F8;border-radius:6px;padding:4px 8px;margin:2px 0 1px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .ref .a{font-size:12.5px;color:var(--sub)}
 .ref .nums{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:8px 0 2px}
 .ref .nums span{display:block;font-size:11.5px;color:var(--sub)}
@@ -259,7 +260,7 @@ dialog::backdrop{background:#10141c88}
 
       <div class="secthead">
         <div><h3>보관함에서 찾기</h3><div class="sub">지정 키워드·계정·링크로 가져온 수집분을 함께 봅니다. 국내·해외 모두 포함합니다.</div></div>
-        <div class="row"><span class="sub" id="count"></span><button class="btn ghost sm" id="collect">유튜브 새로 수집</button></div>
+        <div class="row"><span class="sub" id="count"></span><button class="btn ghost sm" id="ko" hidden>영어 제목 한글로</button><button class="btn ghost sm" id="collect">유튜브 새로 수집</button></div>
       </div>
       <div class="card" style="padding:8px 18px 16px;margin-bottom:0">
         <div class="plat" id="plat"></div>
@@ -423,12 +424,15 @@ const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAl
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const num = n => n == null ? '—' : n >= 1e8 ? (n/1e8).toFixed(1)+'억' : n.toLocaleString();
 const PLAT = {youtube:'유튜브', youtube_shorts:'쇼츠', instagram:'릴스', tiktok:'틱톡'};
+const hasKo = t => /[가-힣]/.test(t || '');
+// 한글이 없는 제목(해외 레퍼런스)만 한글 요약 대상. true = 아직 요약이 없음
+const needsKo = r => !hasKo(r.title) && !!(r.title || '').trim() && !(r.title_ko || '').trim();
 const PGROUP = r => r.platform === 'instagram' ? 'instagram' : r.platform === 'tiktok' ? 'tiktok' : 'youtube';
 const isShort = r => r.platform !== 'youtube' || (r.duration && r.duration <= 180);
 const api = (p, body) => fetch(p, body ? {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)} : undefined).then(r => r.json());
 const md = t => window.marked ? marked.parse(t) : '<pre>'+esc(t)+'</pre>';
 const store = {get:k => { try { return localStorage.getItem(k) || ''; } catch { return ''; } }, set:(k,v) => { try { localStorage.setItem(k, v); } catch {} }};
-let S = {refs:[], channels:[], brands:{}, keywords:{}, statuses:[], status:'검수대기', plat:'', kwDirty:new Set(), client:store.get('client'), model:store.get('model'), cur:null, detail:null, step:1, atab:'hook'};
+let S = {refs:[], koTodo:[], channels:[], brands:{}, keywords:{}, statuses:[], status:'검수대기', plat:'', kwDirty:new Set(), client:store.get('client'), model:store.get('model'), cur:null, detail:null, step:1, atab:'hook'};
 
 const frameSec = f => { const n = parseInt(f.slice(2), 10); return f[0] === 'f' ? n - 1 : 3 + (n - 1) * 2; };
 const mmss = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;
@@ -498,6 +502,9 @@ function renderGrid() {
   $('#collect').textContent = cl ? `${S.brands[cl] || cl} ${pn} 새로 수집` : `${pn} 새로 수집`;
   renderIg();
   renderKw();
+  S.koTodo = rows.filter(needsKo).map(r => r.id).slice(0, 60);
+  $('#ko').hidden = !S.koTodo.length;
+  $('#ko').textContent = `영어 제목 한글로 ${S.koTodo.length}개`;
   const pname = {instagram:'인스타그램', tiktok:'틱톡', youtube:'유튜브'}[S.plat];
   const emptyMsg = !mine.length ? `${cl ? esc(S.brands[cl]||cl) + ' 채널의 수집분이 아직 없습니다.' : '보관함이 비어 있습니다.'} 위에 링크를 넣거나 「유튜브 새로 수집」을 눌러 주세요.`
     : S.plat && !pc(S.plat) ? `${pname} 수집분이 없습니다. 위 입력란에 ${pname} 링크를 넣어 추가해 주세요.` : '조건에 맞는 레퍼런스가 없습니다. 상태 탭을 「전체」로 바꿔 보세요.';
@@ -507,6 +514,7 @@ function renderGrid() {
         ${hotBadges(r)}${r.carousel_candidate ? '<span class="badge c">캐러셀 후보</span>' : ''}</div>
       <div class="b"><div class="k">${r.region === 'GLOBAL' ? '해외' : '국내'} · ${PLAT[r.platform]||''} · ${esc((r.source||'').split(':')[0] || '수집')}${cl ? '' : ' · ' + esc(S.brands[r.fit] || r.fit || '채널 미정')}</div>
         <div class="t">${esc(r.topic_ko || r.title || r.id)}</div>
+        ${needsKo(r) === false && r.title_ko ? `<div class="ko">${esc(r.title_ko)}</div>` : ''}
         <div class="a">@${esc(r.author||'—')}</div>
         <div class="nums"><div><span>조회</span><b>${num(r.views)}</b></div><div><span>좋아요</span><b>${num(r.likes)}</b></div><div><span>댓글</span><b>${num(r.comments)}</b></div></div>
         <div class="d">게시 ${esc(r.uploaded||'—')} · 수집 시점 관측값</div>
@@ -790,6 +798,7 @@ async function openRef(id, stay) {
     <div class="th">${t ? `<img src="${esc(t)}" alt="">` : '<div class="ph">미리보기 없음</div>'}</div>
     <div><div class="sub">${r.region === 'GLOBAL' ? '해외' : '국내'} · ${PLAT[r.platform]||''} · ${esc(r.source||'')} · ${esc(S.brands[r.fit] || r.fit || '채널 미정')}</div>
       <h2 style="margin:4px 0">${esc(r.topic_ko || m.title || r.title || id)}</h2>
+      ${r.title_ko ? `<div class="sub" style="font-size:14px;color:var(--ink)">${esc(r.title_ko)}</div>` : ''}
       <div class="sub">@${esc(m.author || r.author || '—')} · 게시 ${esc(m.uploaded || r.uploaded || '—')} · 길이 ${m.duration ? Math.round(m.duration)+'초' : '—'}</div>
       <div class="stats">
         <div><span>조회</span><b>${num(m.views ?? r.views)}</b></div><div><span>좋아요</span><b>${num(m.likes ?? r.likes)}</b></div>
@@ -822,6 +831,12 @@ function startFetch(idOrUrl, box) {
 }
 $('#start').onclick = () => { const u = $('#url').value.trim(); if (u) startFetch(u); };
 $('#url').addEventListener('keydown', e => { if (e.key === 'Enter') $('#start').click(); });
+$('#ko').onclick = async () => {
+  if (!S.koTodo.length) return;
+  const j = await api('/api/translate', {ids: S.koTodo, model: S.model});
+  if (j.error) return $('#job-collect').innerHTML = `<div class="note">${esc(j.error)}</div>`;
+  watch(j.job, $('#job-collect'), `영어 제목 ${j.count}개 한글 요약`, () => { loadModels(); loadRefs(); });
+};
 $('#collect').onclick = async () => {
   if (S.kwDirty.size && !await saveKw()) return;          // 고친 키워드는 저장부터
   const pl = kwPlat(), pn = {instagram: '인스타그램', tiktok: '틱톡', youtube: '유튜브'}[pl];

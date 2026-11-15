@@ -240,7 +240,7 @@ def add_signals(refs):
 
 # ---------------- 백그라운드 작업 (진행률 · 남은 시간) ----------------
 STATS = os.path.join(REELS, 'data', 'job_stats.json')   # 단계별 실제 소요 시간 기록 → 다음 예상 시간에 반영
-EST = {'add': 8, 'fetch': 45, 'analysis': 300, 'scripts5': 240, 'plan': 180, 'instagram': 180, 'yt_query': 35, 'ig_query': 45, 'tt_query': 40}
+EST = {'add': 8, 'fetch': 45, 'translate': 40, 'analysis': 300, 'scripts5': 240, 'plan': 180, 'instagram': 180, 'yt_query': 35, 'ig_query': 45, 'tt_query': 40}
 
 
 def est_for(key, default=None):
@@ -666,6 +666,22 @@ class H(BaseHTTPRequestHandler):
                             return self.send(400, {'error': f'{k} 형식이 올바르지 않습니다.'})
                         save_dotenv(k, v)
                 return self.send(200, {'ok': True, 'keys': {k: bool(ENV.get(k)) for k in KEYS}})
+            if path == '/api/translate':  # 해외 제목 → 한글 한 줄 요약
+                ids = [x for x in (body.get('ids') or []) if safe_id(x)][:60]
+                if not ids:
+                    return self.send(400, {'error': '한글로 옮길 항목이 없습니다.'})
+                model = body.get('model') or models_cfg()['default']
+                m = next((x for x in models_cfg()['models'] if x['id'] == model), None)
+                if not m:
+                    return self.send(400, {'error': '알 수 없는 모델입니다.'})
+                if m['engine'] == 'openai' and not ENV.get('OPENAI_API_KEY'):
+                    return self.send(400, {'error': 'ChatGPT(OpenAI) API 키가 없습니다. 「API 키 설정」에서 등록해 주세요.'})
+                if m['engine'] == 'claude' and not shutil.which('claude'):
+                    return self.send(400, {'error': 'claude CLI 를 찾지 못했습니다.'})
+                argv = py('app/llm_translate.py', '--model', model, '--ids', ','.join(ids))
+                st = step(f"제목 {len(ids)}개 한글 요약 · {m['label']}", argv, key='translate', est=est_for('translate', 40),
+                          env=clean_env() if m['engine'] == 'claude' else None, cost_key=f'{model}:translate')
+                return self.send(200, {'job': run_job('translate', [st])['id'], 'count': len(ids)})
             if path == '/api/keywords':  # 채널별·플랫폼별 수집 키워드 저장
                 plat = body.get('platform') if body.get('platform') in PLATS else 'youtube'
                 if not fit:
