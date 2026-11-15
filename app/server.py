@@ -129,7 +129,8 @@ def step_prompt(step, rid, fit):
             f'대상 레퍼런스 폴더: {d}/ (meta.json, transcript.txt, frames/). 질문하지 말고 끝까지 완료하세요. '
             f'수치·경험담·대본을 지어내지 않습니다. 셸 명령은 쓰지 않고 Read/Write 만 사용합니다. ')
     if step == 'analysis':
-        return base + (f'스킬의 "② analysis.md (화면·대본 분석)"만 수행해 {d}/analysis.md 를 작성하세요. '
+        return base + (f'스킬의 "② analysis.md (화면·대본 분석)"만 수행해 {d}/analysis.md 를 작성하고, '
+                       f'같은 내용을 app/analysis_schema.md 의 스키마대로 {d}/analysis.json 에도 저장하세요(유효한 JSON, frames 의 file 은 실제 파일명만). '
                        f'frames/ 의 f_0NN.jpg(첫 3초)는 전부, g_NNN.jpg 는 장면이 바뀌는 곳 위주로 8~12장을 Read 로 직접 봅니다. '
                        f'대본이 비어 있으면 화면 자막에서 복원하고 그렇게 표시합니다. ③④는 하지 않습니다.')
     if step == 'scripts5':
@@ -180,6 +181,8 @@ class H(BaseHTTPRequestHandler):
         if path == '/api/refs':
             c = cfg()
             return self.send(200, {'refs': load_refs(), 'channels': list(c['channels']), 'statuses': STATUSES,
+                                   'brands': {k: v.get('brand') for k, v in c['channels'].items()},
+                                   'keywords': {k: {'kr': v.get('kr', []), 'global': v.get('global', [])} for k, v in c['channels'].items()},
                                    'apify': bool(os.environ.get('APIFY_TOKEN')), 'claude': bool(shutil.which('claude'))})
         if path == '/api/weekly':
             return self.send(200, weekly())
@@ -194,7 +197,11 @@ class H(BaseHTTPRequestHandler):
             meta = json.loads(read(os.path.join(d, 'meta.json'), '{}') or '{}')
             tr = json.loads(read(os.path.join(d, 'transcript.json'), '[]') or '[]')
             frames = sorted(os.path.basename(p) for p in glob.glob(os.path.join(d, 'frames', '*.jpg')))
-            return self.send(200, {'id': rid, 'ref': ref, 'meta': meta, 'transcript': tr, 'frames': frames,
+            try:
+                aj = json.loads(read(os.path.join(d, 'analysis.json'), 'null') or 'null')
+            except ValueError:
+                aj = None
+            return self.send(200, {'id': rid, 'ref': ref, 'meta': meta, 'transcript': tr, 'frames': frames, 'analysis_json': aj,
                                    **{k: read(os.path.join(d, f)) for k, f in STEP_FILE.items()}})
         m = re.fullmatch(r'/frames/([\w-]+)/([\w.]+\.jpg)', path)
         if m and safe_id(m.group(1)):

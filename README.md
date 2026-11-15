@@ -31,7 +31,9 @@ python app/server.py        # http://localhost:5180  (윈도우: start-dashboard
 - 링크 하나로 시작: 인스타 릴스 · 틱톡(단축 링크 포함) · 유튜브 롱폼/쇼츠 URL → 보관함 추가 + 대본·화면 캡처 내려받기.
 - 보관함: `reels/data/refs.jsonl` 수집분을 검색·국가·수집 경로·채널·상태로 거른다. 「유튜브 새로 수집」은 `collect.py youtube` 실행.
 - 분석·대본 5개·제작 기획 버튼은 `claude -p`(Claude Code CLI)를 호출한다 → 터미널에서 `claude` 로그인이 살아 있어야 한다(만료 시 `/login`).
-- 「주간 63개 주제」 탭: `work/out/cand_*.json` 후보와 확정 CSV를 표로 본다.
+- 우측 상단 「고객 채널」을 고르면 보관함·수집·주간 리서치가 그 채널 기준으로 바뀐다(`reels/config.json` 의 channels — 건강한마케팅(열정덕) 포함). 보관함은 유튜브/인스타그램/틱톡 탭으로 나뉜다.
+- 「화면·대본 분석」은 첫 3초 대사 · 대본 구조 · 화면 분석 · 원문·번역 · 반응 인사이트 5개 탭. 분석 실행 시 `analysis.md` 와 함께 `analysis.json`(`app/analysis_schema.md`)을 만든다.
+- 「주간 주제 리서치」 탭: `work/out/cand_*.json` 후보와 확정 CSV를 표로 본다.
 - 설치: `pip install "yt-dlp[default,curl-cffi]"` (틱톡은 curl-cffi 필요) + ffmpeg.
 
 ## 3. 폴더

@@ -6,20 +6,24 @@
 <title>콘텐츠 스튜디오</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
 <style>
-:root{--bg:#F5F6F8;--card:#fff;--ink:#14171C;--sub:#667080;--line:#E3E7ED;--ac:#2F5BD3;--ac-soft:#EAF0FF;--ok:#1E8E5A;--warn:#B4540A;--err:#C0392B}
+:root{--bg:#F5F6F8;--card:#fff;--ink:#14171C;--sub:#667080;--line:#E3E7ED;--ac:#2F5BD3;--ac-soft:#EAF0FF;--warn:#B4540A}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Pretendard,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
 button,input,select{font:inherit;color:inherit}
-.wrap{max-width:1280px;margin:auto;padding:22px 24px 80px}
-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}
+.wrap{max-width:1280px;margin:auto;padding:22px 24px 90px}
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px;flex-wrap:wrap}
 h1{font-size:24px;margin:0 0 2px;letter-spacing:-.02em}
 .sub{color:var(--sub);font-size:13px}
+.hright{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.client{display:flex;flex-direction:column;gap:3px}
+.client span{font-size:11.5px;font-weight:700;color:var(--sub)}
+.client select{border:1.5px solid var(--ac);background:var(--ac-soft);color:var(--ac);font-weight:700;border-radius:10px;padding:8px 12px;min-width:190px}
 .modes{display:flex;gap:6px}
-.modes button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;color:var(--sub);cursor:pointer}
-.modes button[aria-pressed=true]{background:var(--ac-soft);border-color:var(--ac);color:var(--ac)}
+.modes button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;color:var(--sub);cursor:pointer}
+.modes button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
 .steps{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line);margin-bottom:18px}
 .steps button{border:0;background:none;padding:12px 8px;display:flex;align-items:center;justify-content:center;gap:9px;color:var(--sub);font-weight:600;font-size:14px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
-.steps button .n{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:12.5px;background:var(--card)}
+.steps .n{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:12.5px;background:var(--card)}
 .steps button[aria-selected=true]{color:var(--ac);border-color:var(--ac)}
 .steps button[aria-selected=true] .n{background:var(--ac);border-color:var(--ac);color:#fff}
 .steps button.done .n{background:var(--ac-soft);border-color:var(--ac);color:var(--ac)}
@@ -32,30 +36,40 @@ label.l{display:block;font-size:12.5px;font-weight:700;margin:16px 0 6px}
 input[type=text],input[type=url],select{border:1px solid var(--line);border-radius:10px;padding:11px 13px;background:var(--card);min-width:0}
 input:focus,select:focus,button:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
 .grow{flex:1 1 280px}
-.btn{border:0;border-radius:10px;padding:11px 20px;font-weight:700;background:var(--ac);color:#fff;cursor:pointer;white-space:nowrap}
+.btn{border:0;border-radius:10px;padding:11px 20px;font-weight:700;background:var(--ac);color:#fff;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-block}
 .btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}
 .btn.sm{padding:7px 12px;font-size:13px}
 .btn:disabled{opacity:.5;cursor:default}
 .hint{font-size:12.5px;color:var(--sub);margin-top:8px}
-.filters{display:grid;grid-template-columns:minmax(0,1fr) 170px 170px 150px;gap:14px;align-items:end}
+.filters{display:grid;grid-template-columns:minmax(0,1fr) 160px 170px 140px;gap:14px;align-items:end}
 .filters label.l{margin-top:0}
 .filters input,.filters select{width:100%}
-.secthead{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px}
-.tabs{display:flex;gap:4px;flex-wrap:wrap;margin:14px 0 4px}
+.secthead{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px;gap:12px;flex-wrap:wrap}
+.plat{display:flex;gap:0;border-bottom:1px solid var(--line);margin:0 0 14px}
+.plat button{border:0;background:none;padding:10px 16px;font-weight:700;font-size:14.5px;color:var(--sub);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-1px}
+.plat button[aria-pressed=true]{color:var(--ink);border-color:var(--ink)}
+.plat button small{font-weight:600;color:var(--sub);margin-left:4px}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin:14px 0 0}
 .tabs button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600;color:var(--sub);cursor:pointer}
 .tabs button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-top:16px}
-.ref{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;text-align:left;padding:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px;margin-top:16px}
+.ref{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
 .ref:hover{border-color:var(--ac);box-shadow:0 4px 14px #1c2a4d14}
-.th{position:relative;aspect-ratio:4/5;background:#DDE2EA;overflow:hidden}
+.th{position:relative;aspect-ratio:1/1;background:#DDE2EA;overflow:hidden}
 .th img{width:100%;height:100%;object-fit:cover;display:block}
 .th .ph{display:grid;place-items:center;height:100%;color:var(--sub);font-weight:700;font-size:13px}
 .badge{position:absolute;top:8px;font-size:12px;font-weight:800;padding:2px 8px;border-radius:6px;color:#fff;font-variant-numeric:tabular-nums}
-.badge.x{left:8px;background:#111c}.badge.c{right:8px;background:var(--ac)}.badge.p{left:8px;bottom:8px;top:auto;background:#111c;font-weight:600}
-.ref .b{padding:10px 12px 12px;display:flex;flex-direction:column;gap:3px}
-.ref .t{font-weight:700;font-size:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.ref .m{font-size:12.5px;color:var(--sub)}
-.dots{display:flex;gap:4px;margin-top:4px}
+.badge.x{left:8px;background:#111c}.badge.c{right:8px;background:var(--ac)}
+.ref .b{padding:12px 14px 14px;display:flex;flex-direction:column;gap:4px;flex:1}
+.ref .k{font-size:12px;color:var(--sub)}
+.ref .t{font-weight:700;font-size:14.5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.9em}
+.ref .a{font-size:12.5px;color:var(--sub)}
+.ref .nums{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:8px 0 2px}
+.ref .nums span{display:block;font-size:11.5px;color:var(--sub)}
+.ref .nums b{font-size:17px;font-variant-numeric:tabular-nums}
+.ref .d{font-size:11.5px;color:var(--sub)}
+.ref .go{margin-top:10px;width:100%;padding:9px;font-size:13.5px}
+.dots{display:flex;gap:4px;margin-top:6px}
 .dots span{font-size:11px;font-weight:700;padding:1px 6px;border-radius:5px;background:#EEF1F5;color:#98A1AF}
 .dots span.on{background:var(--ac-soft);color:var(--ac)}
 .empty{color:var(--sub);text-align:center;padding:44px 0;grid-column:1/-1}
@@ -63,18 +77,52 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--ac);outlin
 .job .jh{display:flex;justify-content:space-between;padding:8px 12px;font-size:13px;font-weight:700;background:#1A1E26}
 .job pre{margin:0;padding:10px 12px;font:12px/1.5 Consolas,monospace;white-space:pre-wrap;max-height:180px;overflow:auto}
 .st-running{color:#F5C451}.st-done{color:#62D49B}.st-error{color:#FF8577}
-.refhead{display:grid;grid-template-columns:150px 1fr;gap:20px}
+.refhead{display:grid;grid-template-columns:130px 1fr;gap:20px}
 .refhead .th{border-radius:10px;aspect-ratio:9/14}
-.stats{display:flex;gap:22px;flex-wrap:wrap;margin:10px 0}
-.stats div b{display:block;font-size:19px;font-variant-numeric:tabular-nums}
-.stats div span{font-size:12px;color:var(--sub)}
+.stats{display:flex;gap:26px;flex-wrap:wrap;margin:10px 0}
+.stats b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+.stats span{font-size:12px;color:var(--sub)}
+.atabs{display:flex;gap:22px;border-bottom:1px solid var(--line);margin:0 0 18px;overflow-x:auto}
+.atabs button{border:0;background:none;padding:10px 0;font-weight:700;font-size:14px;color:var(--sub);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.atabs button[aria-selected=true]{color:var(--ac);border-color:var(--ac)}
+.cap{font-size:12.5px;color:var(--sub);margin-bottom:6px}
+.hooktext{font-size:22px;font-weight:700;line-height:1.45;letter-spacing:-.01em;max-width:760px;margin:4px 0 16px}
+.hf{display:flex;gap:10px;flex-wrap:wrap}
+.hf figure{margin:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#F1F4F8;width:112px}
+.hf img{width:100%;aspect-ratio:9/15;object-fit:contain;background:#0F1217;display:block}
+.hf figcaption{font-size:12px;text-align:center;padding:4px;color:var(--sub);font-variant-numeric:tabular-nums}
+.kv{display:grid;grid-template-columns:120px 1fr;gap:8px 14px;margin:6px 0;font-size:14px}
+.kv dt{color:var(--sub)}.kv dd{margin:0;font-weight:700}
+.sec{border-top:1px solid var(--line);margin-top:18px;padding-top:16px}
+.sec>.h{display:flex;justify-content:space-between;font-weight:700;font-size:14px;margin-bottom:8px}
+.sec>.h small{font-weight:500;color:var(--sub)}
+details{border-top:1px solid var(--line);padding:12px 0}
+details summary{cursor:pointer;font-size:13.5px;font-weight:600;color:var(--sub)}
+details>div{padding-top:10px;font-size:14px}
+.big{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.big figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#F1F4F8}
+.big img{width:100%;display:block}
+.big figcaption{font-size:12.5px;padding:8px 10px;background:var(--card)}
+.big figcaption time{display:block;text-align:center;color:var(--sub);font-variant-numeric:tabular-nums;margin-bottom:3px}
+.role{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--ac-soft);color:var(--ac);white-space:nowrap}
+.role.cta{background:#FDEBD9;color:var(--warn)}.role.body{background:#EEF1F5;color:#4A5362}
+.tl{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
+.tl .hd{font-size:12.5px;color:var(--sub);padding-bottom:8px;border-bottom:1px solid var(--line)}
+.tl .cell{padding:14px 0;border-bottom:1px solid var(--line);font-size:14px;line-height:1.65}
+.tl .cell .role{margin-bottom:8px}
+.tl .cell.ko{font-weight:600;padding-top:46px}
+.tl time{color:var(--sub);font-variant-numeric:tabular-nums}
+table.t{border-collapse:collapse;width:100%;font-size:13.5px}
+table.t th,table.t td{border-bottom:1px solid var(--line);padding:9px 10px;vertical-align:top;text-align:left}
+table.t th{font-size:12px;color:var(--sub);white-space:nowrap}
+.flow{background:var(--ac-soft);border-radius:10px;padding:10px 14px;font-weight:600;font-size:14px;margin-bottom:12px}
+ul.ck{margin:6px 0;padding-left:20px}ul.ck li{margin:4px 0}
+.cta-bar{display:flex;justify-content:space-between;align-items:center;gap:14px;border-top:1px solid var(--line);margin-top:20px;padding-top:16px;flex-wrap:wrap}
+.trail{font-size:12px;color:var(--sub);margin-top:12px}
 .frames{display:flex;gap:8px;overflow-x:auto;padding:6px 0 10px}
-.frames figure{margin:0;flex:0 0 auto}
-.frames img{height:210px;border-radius:8px;display:block;border:1px solid var(--line)}
+.frames figure{margin:0;flex:0 0 auto;width:104px}
+.frames img{width:100%;aspect-ratio:9/15;object-fit:contain;background:#0F1217;border-radius:8px;display:block;border:1px solid var(--line)}
 .frames figcaption{font-size:11.5px;color:var(--sub);text-align:center;margin-top:3px;font-variant-numeric:tabular-nums}
-.tr{max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:13.5px}
-.tr div{display:grid;grid-template-columns:52px 1fr;gap:8px;padding:2px 0}
-.tr time{color:var(--ac);font-variant-numeric:tabular-nums;font-size:12.5px}
 .md{font-size:14.5px;overflow-x:auto}
 .md h1{font-size:20px}.md h2{font-size:17px;margin-top:26px;padding-top:14px;border-top:1px solid var(--line)}.md h3{font-size:15px;margin-top:18px}
 .md table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13px}
@@ -88,8 +136,10 @@ table.w th,table.w td{border-bottom:1px solid var(--line);padding:8px 9px;vertic
 table.w th{font-size:12px;color:var(--sub);white-space:nowrap;position:sticky;top:0;background:var(--card)}
 .pill{display:inline-block;font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:5px;background:#EEF1F5;color:var(--sub);white-space:nowrap}
 .pill.s{background:#FDEBD9;color:var(--warn)}
+.kw{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.kw span{font-size:12px;background:#EEF1F5;border-radius:999px;padding:3px 10px;color:#4A5362}
 [hidden]{display:none!important}
-@media(max-width:820px){.filters{grid-template-columns:1fr 1fr}.steps button span.lb{display:none}.refhead{grid-template-columns:1fr}.refhead .th{max-width:160px}}
+@media(max-width:820px){.filters{grid-template-columns:1fr 1fr}.steps .lb{display:none}.refhead{grid-template-columns:1fr}.refhead .th{max-width:140px}.tl{grid-template-columns:1fr}.tl .hd.ko{display:none}.tl .cell.ko{padding-top:0}.hooktext{font-size:18px}}
 </style>
 </head>
 <body>
@@ -97,15 +147,17 @@ table.w th{font-size:12px;color:var(--sub);white-space:nowrap;position:sticky;to
   <header>
     <div>
       <h1>다음 콘텐츠 만들기</h1>
-      <div class="sub">레퍼런스에서 구조를 빌리고, 내용은 우리 채널 분야로 새로 씁니다 · 업로드는 사람이 합니다</div>
+      <div class="sub">레퍼런스에서 구조를 빌리고, 내용은 고객 채널 분야로 새로 씁니다 · 업로드는 사람이 합니다</div>
     </div>
-    <div class="modes">
-      <button id="mode-studio" aria-pressed="true">레퍼런스 스튜디오</button>
-      <button id="mode-weekly" aria-pressed="false">주간 63개 주제</button>
+    <div class="hright">
+      <div class="modes">
+        <button id="mode-studio" aria-pressed="true">레퍼런스 스튜디오</button>
+        <button id="mode-weekly" aria-pressed="false">주간 주제 리서치</button>
+      </div>
+      <label class="client"><span>고객 채널</span><select id="client"></select></label>
     </div>
   </header>
 
-  <!-- ================= 레퍼런스 스튜디오 ================= -->
   <section id="studio">
     <nav class="steps" role="tablist">
       <button role="tab" data-step="1" aria-selected="true"><span class="n">1</span><span class="lb">레퍼런스</span></button>
@@ -114,7 +166,6 @@ table.w th{font-size:12px;color:var(--sub);white-space:nowrap;position:sticky;to
       <button role="tab" data-step="4" disabled><span class="n">4</span><span class="lb">제작 기획</span></button>
     </nav>
 
-    <!-- 1 레퍼런스 -->
     <div data-pane="1">
       <div class="card">
         <h2>링크 하나로 시작하세요</h2>
@@ -122,11 +173,10 @@ table.w th{font-size:12px;color:var(--sub);white-space:nowrap;position:sticky;to
         <label class="l" for="url">Instagram · TikTok · YouTube 게시물 URL</label>
         <div class="row">
           <input class="grow" id="url" type="url" placeholder="https://www.instagram.com/reel/…  ·  https://www.tiktok.com/@…/video/…  ·  https://www.youtube.com/shorts/…">
-          <select id="start-fit" title="대상 채널"></select>
           <button class="btn" id="start">링크로 시작</button>
         </div>
         <div class="row hint">
-          <span>인스타 공개 /reel/ · /p/ 영상, 틱톡 영상(단축 링크 포함), 유튜브 롱폼·쇼츠를 지원합니다. 캐러셀·비공개 게시물은 지원하지 않습니다.</span>
+          <span>인스타 공개 /reel/ · /p/ 영상, 틱톡 영상(단축 링크 포함), 유튜브 롱폼·쇼츠를 지원합니다. 선택한 고객 채널로 배정됩니다.</span>
           <label><input type="checkbox" id="cookies"> 인스타 로그인 벽에 막히면 크롬 로그인 사용</label>
         </div>
         <div id="job-start"></div>
@@ -136,44 +186,49 @@ table.w th{font-size:12px;color:var(--sub);white-space:nowrap;position:sticky;to
         <div><h3>보관함에서 찾기</h3><div class="sub">지정 키워드·계정·링크로 가져온 수집분을 함께 봅니다. 국내·해외 모두 포함합니다.</div></div>
         <div class="row"><span class="sub" id="count"></span><button class="btn ghost sm" id="collect">유튜브 새로 수집</button></div>
       </div>
-      <div class="card" style="padding:16px 18px;margin-bottom:0">
+      <div class="card" style="padding:8px 18px 16px;margin-bottom:0">
+        <div class="plat" id="plat"></div>
         <div class="filters">
           <div><label class="l" for="q">보관함 검색</label><input id="q" type="text" placeholder="보관함의 주제, 계정 또는 URL"></div>
           <div><label class="l" for="f-region">국가</label><select id="f-region"><option value="">국내·해외 전체</option><option value="KR">국내</option><option value="GLOBAL">해외</option></select></div>
           <div><label class="l" for="f-source">수집 경로</label><select id="f-source"><option value="">모든 수집 경로</option><option value="키워드">키워드 검색</option><option value="계정">지정 계정</option><option value="해시태그">해시태그</option><option value="직접 추가">링크 직접 추가</option></select></div>
-          <div><label class="l" for="f-fit">채널</label><select id="f-fit"><option value="">모든 채널</option></select></div>
+          <div><label class="l" for="f-form">형식</label><select id="f-form"><option value="">숏폼·롱폼</option><option value="short">숏폼만</option><option value="long">롱폼만</option></select></div>
         </div>
         <div class="tabs" id="status-tabs"></div>
+        <div class="kw" id="kw"></div>
         <div id="job-collect"></div>
       </div>
       <div class="grid" id="grid"></div>
     </div>
 
-    <!-- 2 화면·대본 분석 -->
     <div data-pane="2" hidden>
       <div class="card" id="refcard"></div>
       <div class="card">
-        <div class="secthead"><div><h2>화면 캡처</h2><div class="sub">첫 3초는 1초마다, 이후 2초 간격입니다.</div></div></div>
-        <div class="frames" id="frames"></div>
-        <h2 style="margin-top:14px">원본 대본</h2>
-        <div class="sub" id="tr-src"></div>
-        <div class="tr" id="transcript" style="margin-top:8px"></div>
-      </div>
-      <div class="card">
         <div class="secthead">
-          <div><h2>화면·대본 분석</h2><div class="sub">첫 3초 · 대본 구조 · 화면 분석 · 원문/번역 · 반응 인사이트</div></div>
-          <button class="btn" data-run="analysis">분석 실행</button>
+          <div class="sub" id="a-state"></div>
+          <button class="btn sm" data-run="analysis">분석 실행</button>
         </div>
         <div id="job-analysis"></div>
-        <div class="md" id="md-analysis"></div>
+        <nav class="atabs" id="atabs">
+          <button data-a="hook" aria-selected="true">첫 3초 대사</button>
+          <button data-a="structure">대본 구조</button>
+          <button data-a="screens">화면 분석</button>
+          <button data-a="translation">원문·번역</button>
+          <button data-a="insights">반응 인사이트</button>
+        </nav>
+        <div id="apane"></div>
+        <div class="cta-bar">
+          <span class="sub">원문의 후킹·문장 틀·전개를 다른 주제와 사례에 적용합니다.</span>
+          <button class="btn" id="to5">원문 구조로 새 이야기 5개 만들기 →</button>
+        </div>
+        <div class="trail" id="trail"></div>
       </div>
     </div>
 
-    <!-- 3 대본 5개 -->
     <div data-pane="3" hidden>
       <div class="card">
         <div class="secthead">
-          <div><h2>대본 5개 비교</h2><div class="sub">원본의 구조(단위 수·역할 순서·컷 리듬)만 빌려 우리 채널 분야의 새 대본 5개를 씁니다.</div></div>
+          <div><h2>대본 5개 비교</h2><div class="sub">원본의 구조(단위 수·역할 순서·컷 리듬)만 빌려 고객 채널 분야의 새 대본 5개를 씁니다.</div></div>
           <div class="row"><select id="fit3" title="대상 채널"></select><button class="btn" data-run="scripts5">대본 5개 만들기</button></div>
         </div>
         <div class="note">의료광고법·화장품법·보험 약관 표현은 자동 점검 후에도 사람이 검수합니다. <code>[인터뷰 필요]</code> 표시는 출연자에게 직접 물어 채웁니다.</div>
@@ -182,7 +237,6 @@ table.w th{font-size:12px;color:var(--sub);white-space:nowrap;position:sticky;to
       </div>
     </div>
 
-    <!-- 4 제작 기획 -->
     <div data-pane="4" hidden>
       <div class="card">
         <div class="secthead">
@@ -195,14 +249,14 @@ table.w th{font-size:12px;color:var(--sub);white-space:nowrap;position:sticky;to
     </div>
   </section>
 
-  <!-- ================= 주간 63개 주제 ================= -->
   <section id="weekly" hidden>
     <div class="card">
       <div class="secthead">
         <div><h2>유튜브 주제 리서치 — 이번 회차</h2><div class="sub" id="w-sub"></div></div>
-        <select id="w-ch"></select>
+        <select id="w-view"><option value="csv">확정 주제</option><option value="cand">리서치 후보 전체</option></select>
       </div>
       <div style="overflow:auto;max-height:70vh"><table class="w" id="w-table"></table></div>
+      <div class="empty" id="w-empty" hidden></div>
     </div>
   </section>
 </div>
@@ -210,54 +264,81 @@ table.w th{font-size:12px;color:var(--sub);white-space:nowrap;position:sticky;to
 <script>
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const num = n => n == null ? '—' : n >= 1e8 ? (n/1e8).toFixed(1)+'억' : n >= 1e4 ? Math.round(n/1e4).toLocaleString()+'만' : n.toLocaleString();
+const num = n => n == null ? '—' : n >= 1e8 ? (n/1e8).toFixed(1)+'억' : n.toLocaleString();
 const PLAT = {youtube:'유튜브', youtube_shorts:'쇼츠', instagram:'릴스', tiktok:'틱톡'};
+const PGROUP = r => r.platform === 'instagram' ? 'instagram' : r.platform === 'tiktok' ? 'tiktok' : 'youtube';
+const isShort = r => r.platform !== 'youtube' || (r.duration && r.duration <= 180);
 const api = (p, body) => fetch(p, body ? {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)} : undefined).then(r => r.json());
 const md = t => window.marked ? marked.parse(t) : '<pre>'+esc(t)+'</pre>';
-let S = {refs:[], channels:[], statuses:[], status:'검수대기', cur:null, detail:null, step:1};
+const store = {get:k => { try { return localStorage.getItem(k) || ''; } catch { return ''; } }, set:(k,v) => { try { localStorage.setItem(k, v); } catch {} }};
+let S = {refs:[], channels:[], brands:{}, keywords:{}, statuses:[], status:'검수대기', plat:'', client:store.get('client'), cur:null, detail:null, step:1, atab:'hook'};
 
-function fitOptions(sel, first) {
-  sel.innerHTML = `<option value="">${first}</option>` + S.channels.map(c => `<option>${esc(c)}</option>`).join('');
-}
+const frameSec = f => { const n = parseInt(f.slice(2), 10); return f[0] === 'f' ? n - 1 : 3 + (n - 1) * 2; };
+const mmss = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;
 function thumb(r) {
   if (r.frame0) return `/frames/${r.id}/${r.frame0}`;
   return (r.platform === 'youtube' || r.platform === 'youtube_shorts') && r.thumb ? r.thumb : null;
+}
+function roleTag(role) {
+  const c = /행동/.test(role||'') ? 'cta' : /후킹/.test(role||'') ? '' : 'body';
+  return `<span class="role ${c}">${esc(role||'본문')}</span>`;
 }
 
 // ---------- 보관함 ----------
 async function loadRefs() {
   const d = await api('/api/refs');
-  Object.assign(S, {refs:d.refs, channels:d.channels, statuses:d.statuses});
-  if (!$('#f-fit').options[1]) { fitOptions($('#f-fit'), '모든 채널'); fitOptions($('#start-fit'), '채널 미정'); fitOptions($('#fit3'), '채널 자동 선택'); }
+  Object.assign(S, {refs:d.refs, channels:d.channels, brands:d.brands||{}, keywords:d.keywords||{}, statuses:d.statuses});
+  if (!$('#client').options.length) {
+    const opt = c => `<option value="${esc(c)}">${esc(S.brands[c] || c)}</option>`;
+    $('#client').innerHTML = '<option value="">전체 고객 채널</option>' + S.channels.map(opt).join('');
+    $('#fit3').innerHTML = '<option value="">채널 자동 선택</option>' + S.channels.map(opt).join('');
+    if (!S.channels.includes(S.client)) S.client = '';
+    $('#client').value = S.client;
+  }
   $('#st4').innerHTML = S.statuses.map(s => `<option>${s}</option>`).join('');
   if (!d.claude) $$('[data-run]').forEach(b => { b.disabled = true; b.title = 'claude CLI 가 필요합니다'; });
   renderGrid();
 }
 function renderGrid() {
-  const q = $('#q').value.trim().toLowerCase(), rg = $('#f-region').value, src = $('#f-source').value, ft = $('#f-fit').value;
-  const base = S.refs.filter(r => (!rg || r.region === rg) && (!src || (r.source||'').startsWith(src)) && (!ft || r.fit === ft)
+  const q = $('#q').value.trim().toLowerCase(), rg = $('#f-region').value, src = $('#f-source').value, form = $('#f-form').value, cl = S.client;
+  const mine = S.refs.filter(r => !cl || r.fit === cl);
+  const base0 = mine.filter(r => (!rg || r.region === rg) && (!src || (r.source||'').startsWith(src)) && (!form || (form === 'short') === !!isShort(r))
     && (!q || [r.title, r.topic_ko, r.author, r.url, r.note, r.source].some(v => (v||'').toLowerCase().includes(q))));
+  const pc = p => base0.filter(r => PGROUP(r) === p).length;
+  $('#plat').innerHTML = [['', '전체', base0.length], ['youtube', '유튜브', pc('youtube')], ['instagram', '인스타그램', pc('instagram')], ['tiktok', '틱톡', pc('tiktok')]]
+    .map(([p, l, n]) => `<button data-p="${p}" aria-pressed="${S.plat === p}">${l}<small>${n}</small></button>`).join('');
+  $$('#plat button').forEach(b => b.onclick = () => { S.plat = b.dataset.p; renderGrid(); });
+  const base = base0.filter(r => !S.plat || PGROUP(r) === S.plat);
   const cnt = s => base.filter(r => r.status === s).length;
   $('#status-tabs').innerHTML = [['', '전체', base.length], ...S.statuses.map(s => [s, s.replace('대기', ' 대기'), cnt(s)])]
     .map(([s, l, n]) => `<button data-s="${s}" aria-pressed="${S.status === s}">${l} ${n}</button>`).join('');
   $$('#status-tabs button').forEach(b => b.onclick = () => { S.status = b.dataset.s; renderGrid(); });
   const rows = base.filter(r => !S.status || r.status === S.status);
-  $('#count').textContent = `${S.refs.length.toLocaleString()}개 수집분`;
+  $('#count').textContent = `${mine.length.toLocaleString()}개 수집분`;
+  $('#collect').textContent = cl ? `${S.brands[cl] || cl} 유튜브 새로 수집` : '유튜브 새로 수집';
+  const kw = cl && S.keywords[cl] ? [...S.keywords[cl].kr, ...S.keywords[cl].global] : [];
+  $('#kw').innerHTML = kw.length ? '<span style="background:none;padding-left:0;color:var(--sub)">수집 키워드</span>' + kw.map(k => `<span>${esc(k)}</span>`).join('') : '';
+  const pname = {instagram:'인스타그램', tiktok:'틱톡', youtube:'유튜브'}[S.plat];
+  const emptyMsg = !mine.length ? `${cl ? esc(S.brands[cl]||cl) + ' 채널의 수집분이 아직 없습니다.' : '보관함이 비어 있습니다.'} 위에 링크를 넣거나 「유튜브 새로 수집」을 눌러 주세요.`
+    : S.plat && !pc(S.plat) ? `${pname} 수집분이 없습니다. 위 입력란에 ${pname} 링크를 넣어 추가해 주세요.` : '조건에 맞는 레퍼런스가 없습니다. 상태 탭을 「전체」로 바꿔 보세요.';
   $('#grid').innerHTML = rows.length ? rows.map(r => {
     const t = thumb(r);
-    return `<button class="ref" data-id="${r.id}">
+    return `<article class="ref">
       <div class="th">${t ? `<img loading="lazy" src="${esc(t)}" alt="">` : `<div class="ph">${PLAT[r.platform]||''} 미리보기 없음</div>`}
-        ${r.outlier ? `<span class="badge x">${r.outlier}배</span>` : ''}${r.carousel_candidate ? '<span class="badge c">캐러셀 후보</span>' : ''}
-        <span class="badge p">${PLAT[r.platform]||''} · ${r.region === 'GLOBAL' ? '해외' : '국내'}</span></div>
-      <div class="b"><div class="t">${esc(r.topic_ko || r.title || r.id)}</div>
-        <div class="m">@${esc(r.author||'—')} · ${esc(r.fit||'채널 미정')}</div>
-        <div class="m">조회 ${num(r.views)} · 좋아요 ${num(r.likes)} · 댓글 ${num(r.comments)}</div>
+        ${r.outlier ? `<span class="badge x">평소 ${r.outlier}배</span>` : ''}${r.carousel_candidate ? '<span class="badge c">캐러셀 후보</span>' : ''}</div>
+      <div class="b"><div class="k">${r.region === 'GLOBAL' ? '해외' : '국내'} · ${PLAT[r.platform]||''} · ${esc((r.source||'').split(':')[0] || '수집')}${cl ? '' : ' · ' + esc(S.brands[r.fit] || r.fit || '채널 미정')}</div>
+        <div class="t">${esc(r.topic_ko || r.title || r.id)}</div>
+        <div class="a">@${esc(r.author||'—')}</div>
+        <div class="nums"><div><span>조회</span><b>${num(r.views)}</b></div><div><span>좋아요</span><b>${num(r.likes)}</b></div><div><span>댓글</span><b>${num(r.comments)}</b></div></div>
+        <div class="d">게시 ${esc(r.uploaded||'—')} · 수집 시점 관측값</div>
         <div class="dots"><span class="${r.fetched?'on':''}">재료</span><span class="${r.analysis?'on':''}">분석</span><span class="${r.scripts5?'on':''}">대본</span><span class="${r.plan?'on':''}">기획</span></div>
-      </div></button>`;
-  }).join('') : `<div class="empty">${S.refs.length ? '조건에 맞는 레퍼런스가 없습니다.' : '보관함이 비어 있습니다. 위에 링크를 넣거나 「유튜브 새로 수집」을 눌러 주세요.'}</div>`;
-  $$('#grid .ref').forEach(b => b.onclick = () => openRef(b.dataset.id));
+        <button class="btn go" data-id="${r.id}">이 레퍼런스로 시작 →</button>
+      </div></article>`;
+  }).join('') : `<div class="empty">${emptyMsg}</div>`;
+  $$('#grid .go').forEach(b => b.onclick = () => openRef(b.dataset.id));
 }
-['q','f-region','f-source','f-fit'].forEach(id => $('#'+id).addEventListener('input', renderGrid));
+['q','f-region','f-source','f-form'].forEach(id => $('#'+id).addEventListener('input', renderGrid));
+$('#client').onchange = () => { S.client = $('#client').value; store.set('client', S.client); renderGrid(); if (!$('#weekly').hidden) renderWeekly(); };
 
 // ---------- 작업 로그 ----------
 function watch(jobId, box, label, onDone) {
@@ -268,7 +349,7 @@ function watch(jobId, box, label, onDone) {
     pre.textContent = (j.log||'').trim(); pre.scrollTop = pre.scrollHeight;
     if (j.status === 'running') return setTimeout(tick, 1500);
     st.className = 'st st-' + j.status; st.textContent = j.status === 'done' ? '완료' : '실패';
-    if (j.status === 'done') { setTimeout(() => { if (st.textContent === '완료') box.innerHTML = ''; }, 2500); }
+    if (j.status === 'done') setTimeout(() => { if (st.textContent === '완료') box.innerHTML = ''; }, 2500);
     onDone && onDone(j.status === 'done');
   };
   tick();
@@ -291,60 +372,117 @@ function syncSteps() {
   });
 }
 
+// ---------- 세부 분석 5개 탭 ----------
+function mdSections(t) {            // analysis.json 이 없을 때: analysis.md 를 H2 기준 5부분으로 나눈다
+  const parts = t.split(/\n(?=## )/).filter(p => /^## /.test(p.trim()));
+  return parts.length >= 5 ? parts : null;
+}
+function figs(list, id, cls) {
+  const have = new Set(S.detail.frames);
+  return `<div class="${cls}">` + list.filter(f => have.has(f.file)).map(f =>
+    `<figure><img loading="lazy" src="/frames/${id}/${f.file}" alt=""><figcaption>${cls === 'big' ? `<time>${mmss(f.sec ?? frameSec(f.file))}</time>${esc(f.desc||'')}` : `${f.sec ?? frameSec(f.file)}초`}</figcaption></figure>`).join('') + '</div>';
+}
+function renderAnalysis() {
+  const d = S.detail, id = d.id, A = d.analysis_json, m = d.meta || {}, box = $('#apane'), tab = S.atab;
+  $$('#atabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.a === tab));
+  const first4 = d.frames.filter(f => f[0] === 'f').concat(d.frames.filter(f => f === 'g_001.jpg')).map(f => ({file:f, sec:frameSec(f)}));
+  const rawTr = d.transcript.length ? '<div class="tl" style="grid-template-columns:1fr">' + d.transcript.map(s => `<div class="cell" style="padding:6px 0"><time>[${mmss(s.start)}]</time> ${esc(s.text)}</div>`).join('') + '</div>'
+    : '<div class="sub">자막이 없습니다. 분석을 실행하면 화면 속 자막으로 대본을 복원합니다.</div>';
+  const allFrames = `<div class="sec"><div class="h">추출 화면 전체 <small>첫 3초는 1초마다, 이후 2초 간격 · ${d.frames.length}장</small></div><div class="frames">${d.frames.map(f => `<figure><img loading="lazy" src="/frames/${id}/${f}" alt=""><figcaption>${mmss(frameSec(f))}</figcaption></figure>`).join('') || '<span class="sub">화면 캡처가 없습니다. 「재료 다시 받기」를 눌러 주세요.</span>'}</div></div>`;
+  const need = `<div class="empty">아직 분석하지 않았습니다. 오른쪽 위 「분석 실행」을 눌러 주세요.</div>`;
+
+  if (!A) {                          // 구조화 데이터 없음 → 원재료 + (있으면) md 섹션
+    const secs = d.analysis ? mdSections(d.analysis) : null, idx = ['hook','structure','screens','translation','insights'].indexOf(tab);
+    let h = '';
+    if (tab === 'hook') h += `<div class="cap">0–3초 · 추출 화면</div>${figs(first4, id, 'hf')}`;
+    if (tab === 'screens') h += allFrames;
+    if (tab === 'translation' && !d.analysis) h += `<div class="cap">원본 대본 · ${esc(m.transcript_source||'없음')}</div>${rawTr}`;
+    h += d.analysis ? `<div class="md">${md(secs ? secs[idx] : (idx === 0 ? d.analysis : ''))}</div>` + (!secs && idx > 0 ? '<div class="sub">이 분석은 탭으로 나뉘지 않은 형식입니다. 「첫 3초 대사」 탭에 전체가 있습니다. 「다시 분석 실행」을 누르면 탭별로 정리됩니다.</div>' : '') : need;
+    return box.innerHTML = h;
+  }
+  const H = A.hook || {}, ST = A.structure || {}, SC = A.screens || {}, IN = A.insights || {};
+  const hookFrames = H.frames && H.frames.length ? H.frames : first4;
+  if (tab === 'hook') box.innerHTML = `
+    <div class="cap">0–3초 · ${esc(H.source || '원문')}</div>
+    <div class="hooktext">${esc(H.text || '(대사 없음)')}</div>
+    ${figs(hookFrames, id, 'hf')}
+    <div class="cap" style="margin-top:6px">추출 화면 · 실제 영상에서 캡처</div>
+    <div class="sec"><div class="h">가져올 문장 형태 <small>AI 분석</small></div>
+      <dl class="kv"><dt>후킹 방식</dt><dd>${esc(H.type||'—')}</dd><dt>이어지는 전개</dt><dd>${esc(H.flow||'—')}</dd></dl></div>
+    <details open><summary>한국어 번역 · 후킹 해석 자세히</summary><div>${H.ko ? `<p><b>${esc(H.ko)}</b></p>` : ''}<p>${esc(H.interpretation||'')}</p></div></details>
+    <details><summary>0–3초 화면 근거 · 프레임 ${(H.frames||[]).length}장</summary><div><table class="t">${(H.frames||[]).map(f => `<tr><td style="white-space:nowrap">${f.sec ?? frameSec(f.file)}초</td><td>${esc(f.desc||'')}</td></tr>`).join('')}</table></div></details>`;
+  if (tab === 'structure') box.innerHTML = `
+    <div class="flow">${esc(ST.flow||'')}</div>
+    <div style="overflow-x:auto"><table class="t"><tr><th>#</th><th>시간</th><th>역할</th><th>유형</th><th>원문</th><th>한국어 번역</th><th>이 대사가 하는 일</th></tr>
+    ${(ST.units||[]).map(u => `<tr><td>${esc(u.n)}</td><td style="white-space:nowrap">${esc(u.time)}</td><td>${roleTag(u.role)}</td><td>${esc(u.type)}</td><td>${esc(u.original)}</td><td><b>${esc(u.ko)}</b></td><td>${esc(u.does)}</td></tr>`).join('')}</table></div>`;
+  if (tab === 'screens') box.innerHTML = `
+    <div class="sec" style="border:0;margin:0;padding:0"><div class="h">후킹 · 첫 3초 <small>실제 영상에서 추출</small></div>${figs(hookFrames, id, 'big')}</div>
+    <p style="font-size:14px">${esc(SC.summary||'')}</p>
+    <div class="sec"><div class="h">화면이 바뀌는 지점</div>${figs(SC.frames||[], id, 'big')}</div>
+    <div class="sec"><div class="h">시간대별 화면 구성</div><table class="t"><tr><th>시간</th><th>화면 종류</th><th>내용</th></tr>${(SC.segments||[]).map(s => `<tr><td style="white-space:nowrap">${esc(s.time)}</td><td style="white-space:nowrap"><span class="pill">${esc(s.kind)}</span></td><td>${esc(s.desc)}</td></tr>`).join('')}</table></div>
+    ${allFrames}`;
+  if (tab === 'translation') box.innerHTML = `
+    <p class="sub">원문과 한국어 완역을 나란히 봅니다. 번역은 AI 초안입니다. 원문의 주장과 인식 오류는 별도로 확인해 주세요.</p>
+    <div class="tl"><div class="hd">원어 대본</div><div class="hd ko">한국어 완역</div>
+    ${(A.translation||[]).map(p => `<div class="cell">${roleTag(p.role)}<br><time>[${esc(p.time)}]</time> ${esc(p.original)}</div><div class="cell ko"><time>[${esc(p.time)}]</time> ${esc(p.ko)}</div>`).join('')}</div>
+    <details><summary>자막 원본 줄 단위로 보기 · ${d.transcript.length}줄 · ${esc(m.transcript_source||'없음')}</summary><div>${rawTr}</div></details>`;
+  if (tab === 'insights') box.innerHTML = `
+    <div class="sec" style="border:0;margin:0;padding:0"><div class="h">왜 터졌나</div><p style="font-size:14px;margin:0">${esc(IN.why||'')}</p></div>
+    <div class="sec"><div class="h">댓글이 붙는 지점</div><p style="font-size:14px;margin:0">${esc(IN.comments||'확인 못 함')}</p></div>
+    <div class="sec"><div class="h">구조에서 빌릴 것</div><ul class="ck">${(IN.borrow||[]).map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+    <div class="sec"><div class="h">사실 확인이 필요한 주장 <small>검증 전에는 우리 대본에 옮기지 않습니다</small></div><ul class="ck">${(IN.verify||[]).map(x => `<li>${esc(x)}</li>`).join('') || '<li>없음</li>'}</ul></div>`;
+}
+$$('#atabs button').forEach(b => b.onclick = () => { S.atab = b.dataset.a; renderAnalysis(); });
+
 async function openRef(id, stay) {
   S.cur = id;
   const d = S.detail = await api('/api/ref/' + id);
   const r = d.ref || {}, m = d.meta || {};
-  if (!d.meta.id && !stay) {            // 재료가 아직 없으면 내려받기부터
-    go(1); return startFetch(id);
-  }
+  if (!m.id && !stay) { go(1); return startFetch(id); }   // 재료가 아직 없으면 내려받기부터
   const t = d.frames[0] ? `/frames/${id}/${d.frames[0]}` : thumb(r);
   $('#refcard').innerHTML = `<div class="refhead">
     <div class="th">${t ? `<img src="${esc(t)}" alt="">` : '<div class="ph">미리보기 없음</div>'}</div>
-    <div><div class="sub">${PLAT[r.platform]||''} · ${r.region === 'GLOBAL' ? '해외' : '국내'} · ${esc(r.source||'')}</div>
+    <div><div class="sub">${r.region === 'GLOBAL' ? '해외' : '국내'} · ${PLAT[r.platform]||''} · ${esc(r.source||'')} · ${esc(S.brands[r.fit] || r.fit || '채널 미정')}</div>
       <h2 style="margin:4px 0">${esc(r.topic_ko || m.title || r.title || id)}</h2>
-      <div class="sub">@${esc(m.author || r.author || '—')} · 업로드 ${esc(m.uploaded || r.uploaded || '—')} · 길이 ${m.duration ? Math.round(m.duration)+'초' : '—'}</div>
+      <div class="sub">@${esc(m.author || r.author || '—')} · 게시 ${esc(m.uploaded || r.uploaded || '—')} · 길이 ${m.duration ? Math.round(m.duration)+'초' : '—'}</div>
       <div class="stats">
-        <div><b>${num(m.views ?? r.views)}</b><span>조회</span></div><div><b>${num(m.likes ?? r.likes)}</b><span>좋아요</span></div>
-        <div><b>${num(m.comments ?? r.comments)}</b><span>댓글</span></div><div><b>${r.outlier ? r.outlier+'배' : '—'}</b><span>평소 대비</span></div>
-        <div><b>${r.engagement != null ? (r.engagement*100).toFixed(1)+'%' : '—'}</b><span>참여율</span></div>
+        <div><span>조회</span><b>${num(m.views ?? r.views)}</b></div><div><span>좋아요</span><b>${num(m.likes ?? r.likes)}</b></div>
+        <div><span>댓글</span><b>${num(m.comments ?? r.comments)}</b></div><div><span>평소 대비</span><b>${r.outlier ? r.outlier+'배' : '—'}</b></div>
+        <div><span>참여율</span><b>${r.engagement != null ? (r.engagement*100).toFixed(1)+'%' : '—'}</b></div>
       </div>
       <div class="sub">${esc(r.judge||'')}</div>
       <div class="row" style="margin-top:12px"><a class="btn ghost sm" href="${esc(r.url || m.url || '#')}" target="_blank" rel="noopener">원본 열기</a>
         <button class="btn ghost sm" id="refetch">재료 다시 받기</button><span id="job-refetch" style="flex-basis:100%"></span></div>
     </div></div>`;
   $('#refetch').onclick = () => startFetch(id, $('#job-refetch'));
-  const sec = f => { const k = f[0], n = parseInt(f.slice(2), 10); return k === 'f' ? n - 1 : 3 + (n - 1) * 2; };
-  $('#frames').innerHTML = d.frames.length ? d.frames.map(f => `<figure><img loading="lazy" src="/frames/${id}/${f}" alt=""><figcaption>${sec(f)}초</figcaption></figure>`).join('')
-    : '<div class="sub">화면 캡처가 없습니다. 「재료 다시 받기」를 눌러 주세요.</div>';
-  $('#tr-src').textContent = `출처: ${m.transcript_source || '없음'} · ${d.transcript.length}줄`;
-  $('#transcript').innerHTML = d.transcript.length ? d.transcript.map(s => `<div><time>${String(Math.floor(s.start/60)).padStart(2,'0')}:${String(Math.floor(s.start%60)).padStart(2,'0')}</time><span>${esc(s.text)}</span></div>`).join('')
-    : '<div class="sub" style="display:block">자막이 없습니다. 분석 단계에서 화면 속 자막으로 대본을 복원합니다.</div>';
-  for (const k of ['analysis','scripts5','plan']) {
-    $('#md-'+k).innerHTML = d[k] ? md(d[k]) : `<div class="empty">아직 만들지 않았습니다.</div>`;
-    const b = $(`[data-run="${k}"]`); b.textContent = (d[k] ? '다시 ' : '') + {analysis:'분석 실행', scripts5:'대본 5개 만들기', plan:'제작 기획 만들기'}[k];
-  }
-  $('#fit3').value = r.fit || ''; $('#st4').value = r.status || '검수대기';
+  $('#a-state').textContent = d.analysis_json ? '분석 완료 · 탭별로 정리됨' : d.analysis ? '분석 완료 (문서 형식)' : `재료 준비됨 · 화면 ${d.frames.length}장 · 대본 ${d.transcript.length}줄`;
+  renderAnalysis();
+  for (const k of ['scripts5','plan']) $('#md-'+k).innerHTML = d[k] ? md(d[k]) : `<div class="empty">아직 만들지 않았습니다.</div>`;
+  for (const k of ['analysis','scripts5','plan']) $(`[data-run="${k}"]`).textContent = (d[k] ? '다시 ' : '') + {analysis:'분석 실행', scripts5:'대본 5개 만들기', plan:'제작 기획 만들기'}[k];
+  $('#to5').textContent = d.scripts5 ? '새 이야기 5개 보기 →' : '원문 구조로 새 이야기 5개 만들기 →';
+  $('#to5').disabled = !d.analysis;
+  $('#trail').textContent = `원본 → 분석 ${d.analysis ? '완료' : '없음'} → 대본 ${d.scripts5 ? '5개' : '0개'} → 저장한 제작 기획 ${d.plan ? 1 : 0}개 · 결과는 reels/data/analysis/${id}/ 에 보관됩니다`;
+  $('#fit3').value = r.fit || S.client || ''; $('#st4').value = r.status || '검수대기';
   syncSteps();
   if (!stay) go(2);
 }
+$('#to5').onclick = () => { go(3); if (!S.detail.scripts5) $('[data-run="scripts5"]').click(); };
 
 function startFetch(idOrUrl, box) {
-  const body = {url: idOrUrl, fit: $('#start-fit').value, cookies: $('#cookies').checked};
-  api('/api/start', body).then(j => {
+  api('/api/start', {url: idOrUrl, fit: S.client, cookies: $('#cookies').checked}).then(j => {
     if (j.error) return (box || $('#job-start')).innerHTML = `<div class="note">${esc(j.error)}</div>`;
     watch(j.job, box || $('#job-start'), '레퍼런스 가져오는 중', async ok => { await loadRefs(); if (ok) openRef(j.ref); });
   });
 }
 $('#start').onclick = () => { const u = $('#url').value.trim(); if (u) startFetch(u); };
 $('#url').addEventListener('keydown', e => { if (e.key === 'Enter') $('#start').click(); });
-$('#collect').onclick = () => api('/api/collect', {fit: $('#f-fit').value, region: $('#f-region').value}).then(j =>
-  watch(j.job, $('#job-collect'), '유튜브 레퍼런스 수집 중 (채널 전체는 10분 이상 걸립니다)', loadRefs));
+$('#collect').onclick = () => api('/api/collect', {fit: S.client, region: $('#f-region').value}).then(j =>
+  watch(j.job, $('#job-collect'), S.client ? '유튜브 레퍼런스 수집 중 (채널 하나는 몇 분 걸립니다)' : '유튜브 레퍼런스 수집 중 (전체 채널은 20분 이상 걸립니다)', loadRefs));
 
 $$('[data-run]').forEach(b => b.onclick = () => {
   const step = b.dataset.run, id = S.cur; if (!id) return;
   b.disabled = true;
-  api('/api/step', {id, step, fit: $('#fit3').value}).then(j => {
+  api('/api/step', {id, step, fit: $('#fit3').value || S.client}).then(j => {
     if (j.error) { b.disabled = false; return $('#job-'+step).innerHTML = `<div class="note">${esc(j.error)}</div>`; }
     watch(j.job, $('#job-'+step), b.textContent + ' — Claude Code 실행 중', async () => { b.disabled = false; await loadRefs(); if (S.cur === id) openRef(id, true); });
   });
@@ -352,26 +490,27 @@ $$('[data-run]').forEach(b => b.onclick = () => {
 $('#fit3').onchange = () => S.cur && $('#fit3').value && api('/api/set', {id:S.cur, fit:$('#fit3').value}).then(loadRefs);
 $('#st4').onchange = () => S.cur && api('/api/set', {id:S.cur, status:$('#st4').value}).then(loadRefs);
 
-// ---------- 주간 63개 주제 ----------
+// ---------- 주간 주제 리서치 ----------
 let W = null;
-async function loadWeekly() {
-  W = await api('/api/weekly');
-  const chs = Object.keys(W.channels);
-  $('#w-ch').innerHTML = (W.csv ? '<option value="__csv">확정 63개 (CSV)</option>' : '') + chs.map(c => `<option value="${esc(c)}">${esc(c)} 후보 ${W.channels[c].length}개</option>`).join('');
-  $('#w-sub').textContent = chs.length ? `리서치 후보 ${chs.reduce((n,c) => n + W.channels[c].length, 0)}개 · ` + (W.csv ? `확정 파일 ${W.csv.name}` : '아직 63개를 확정하지 않았습니다') : '이번 회차 리서치 결과가 아직 없습니다 (work/out/cand_*.json).';
-  renderWeekly();
-}
+async function loadWeekly() { W = await api('/api/weekly'); renderWeekly(); }
 function renderWeekly() {
-  const v = $('#w-ch').value, T = $('#w-table');
-  if (!v) return T.innerHTML = '';
-  if (v === '__csv') {
-    const h = W.csv.header.slice(0, 9);
-    return T.innerHTML = '<tr>' + h.map(x => `<th>${esc(x)}</th>`).join('') + '</tr>' + W.csv.rows.map(r => '<tr>' + r.slice(0, 9).map((c, i) => `<td>${i === 5 ? `<span class="pill ${c === '숏폼' ? 's' : ''}">${esc(c)}</span>` : esc(c)}</td>`).join('') + '</tr>').join('');
+  if (!W) return;
+  const cl = S.client, T = $('#w-table'), E = $('#w-empty'), view = $('#w-view').value;
+  const chs = Object.keys(W.channels);
+  $('#w-sub').textContent = (cl ? `${S.brands[cl] || cl} · ` : '전체 고객 채널 · ') + (chs.length ? `리서치 후보 ${chs.reduce((n,c) => n + W.channels[c].length, 0)}개` : '리서치 후보 없음') + (W.csv ? ` · 확정 파일 ${W.csv.name}` : ' · 아직 확정 전');
+  let html = '';
+  if (view === 'csv' && W.csv) {
+    const rows = W.csv.rows.filter(r => !cl || r[0] === cl);
+    if (rows.length) html = '<tr>' + W.csv.header.slice(0, 9).map(x => `<th>${esc(x)}</th>`).join('') + '</tr>' + rows.map(r => '<tr>' + r.slice(0, 9).map((c, i) => `<td>${i === 5 ? `<span class="pill ${c === '숏폼' ? 's' : ''}">${esc(c)}</span>` : i === 2 ? `<b>${esc(c)}</b>` : esc(c)}</td>`).join('') + '</tr>').join('');
+  } else {
+    const list = (cl ? [cl] : chs).filter(c => W.channels[c]);
+    if (list.length) html = '<tr><th>채널</th><th>No</th><th>주제(가제)</th><th>형식</th><th>카테고리</th><th>키워드</th><th>벤치마크 근거</th><th>핵심 스토리라인</th></tr>' +
+      list.flatMap(ch => W.channels[ch].map(c => `<tr><td style="white-space:nowrap">${esc(ch)}</td><td>${c.No}</td><td><b>${esc(c['주제'])}</b></td><td><span class="pill ${c['형식'] === '숏폼' ? 's' : ''}">${esc(c['형식'])}</span><br><span class="sub">${esc(c['권장 길이'])}</span></td><td>${esc(c['카테고리'])}</td><td>${esc(c['키워드'])}</td><td>${esc(c['벤치마크 근거'])}</td><td>${esc(c['핵심 스토리라인'])}</td></tr>`)).join('');
   }
-  T.innerHTML = '<tr><th>No</th><th>주제(가제)</th><th>형식</th><th>카테고리</th><th>키워드</th><th>벤치마크 근거</th><th>핵심 스토리라인</th></tr>' +
-    W.channels[v].map(c => `<tr><td>${c.No}</td><td><b>${esc(c['주제'])}</b></td><td><span class="pill ${c['형식'] === '숏폼' ? 's' : ''}">${esc(c['형식'])}</span><br><span class="sub">${esc(c['권장 길이'])}</span></td><td>${esc(c['카테고리'])}</td><td>${esc(c['키워드'])}</td><td>${esc(c['벤치마크 근거'])}</td><td>${esc(c['핵심 스토리라인'])}</td></tr>`).join('');
+  T.innerHTML = html; E.hidden = !!html;
+  E.textContent = cl ? `${S.brands[cl] || cl} 채널은 화요일 63개 주제 리포트 대상(7개 채널)이 아니어서 주간 후보가 없습니다. 「레퍼런스 스튜디오」에서 이 채널의 레퍼런스를 수집·분석해 주제를 잡으세요.` : '이번 회차 리서치 결과가 아직 없습니다 (work/out/cand_*.json).';
 }
-$('#w-ch').onchange = renderWeekly;
+$('#w-view').onchange = renderWeekly;
 function mode(m) {
   $('#studio').hidden = m !== 'studio'; $('#weekly').hidden = m !== 'weekly';
   $('#mode-studio').setAttribute('aria-pressed', m === 'studio'); $('#mode-weekly').setAttribute('aria-pressed', m === 'weekly');

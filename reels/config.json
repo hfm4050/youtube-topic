@@ -22,7 +22,8 @@
     "킴스히어링": {"brand": "킴스히어링",     "accent": "#7A5C2E", "law": "의료기기법", "kr": ["부모님 보청기 쇼츠", "난청 신호 자가진단"], "global": ["hearing aids audiologist shorts", "signs of hearing loss parents"]},
     "손해사정사": {"brand": "손해사정사 박신성", "accent": "#374785", "law": "보험(개별 약관)", "kr": ["보험금 거절 손해사정사", "실손보험 청구 쇼츠"], "global": ["insurance claim denied adjuster explains"]},
     "마리안나":   {"brand": "마리안나병원",   "accent": "#6B5B73", "law": "의료광고법·환우 동의", "kr": ["호스피스 보호자 브이로그", "임종 준비 가족"], "global": ["hospice nurse shorts", "end of life care family"]},
-    "판교":       {"brand": "판교 사랑의병원", "accent": "#2E6F6A", "law": "의료광고법", "kr": ["건강검진 결과 내과 의사 쇼츠", "직장인 증상 내과"], "global": ["doctor explains blood test results shorts"]}
+    "판교":       {"brand": "판교 사랑의병원", "accent": "#2E6F6A", "law": "의료광고법", "kr": ["건강검진 결과 내과 의사 쇼츠", "직장인 증상 내과"], "global": ["doctor explains blood test results shorts"]},
+    "건강한마케팅": {"brand": "건강한마케팅(열정덕)", "accent": "#1F7A5C", "law": "표시광고법(과장·허위 금지)·의료광고 대행 시 의료광고법", "kr": ["병원 마케팅 유튜브 쇼츠", "AI 마케팅 자동화 클로드", "릴스 조회수 올리는 법"], "global": ["healthcare marketing tips shorts", "claude ai content automation shorts", "instagram reels growth strategy"]}
   },
   "hot_any_field": {"kr": ["쇼츠 조회수 폭발 이번주"], "global": ["viral shorts this week"]},
   "instagram": {
