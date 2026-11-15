@@ -1,24 +1,120 @@
 {
   "_설명": "대시보드 모델 선택 목록과 가격(USD, 100만 토큰당). 가격이 바뀌면 이 파일만 고친다. Claude: platform.claude.com 가격표, OpenAI: developers.openai.com/api/docs/pricing (2026-11-16 확인).",
   "checked": "2026-11-16",
-  "usd_krw": 1400,
-  "usd_krw_note": "원화 환산은 참고용 가정 환율이다. 실제 환율에 맞게 고쳐 쓴다.",
+  "usd_krw": 1340,
+  "usd_krw_note": "원화 표시용 환율. 2026-10-28 서울 외환시장 종가 1,337.7원을 참고한 값이며, 대시보드 「API 키 설정」 창에서 바꿀 수 있다.",
   "default": "claude-opus-5-5",
   "assumed_tokens": {
     "_설명": "실측 기록이 없을 때 건당 예상 비용 계산에 쓰는 가정 토큰 수(입력, 출력). 한 번 실행하면 실측 평균으로 대체된다.",
-    "claude": {"analysis": [90000, 9000], "scripts5": [45000, 9000], "plan": [50000, 6000]},
-    "openai": {"analysis": [14000, 9000], "scripts5": [12000, 9000], "plan": [16000, 6000]}
+    "claude": {
+      "analysis": [
+        90000,
+        9000
+      ],
+      "scripts5": [
+        45000,
+        9000
+      ],
+      "plan": [
+        50000,
+        6000
+      ]
+    },
+    "openai": {
+      "analysis": [
+        14000,
+        9000
+      ],
+      "scripts5": [
+        12000,
+        9000
+      ],
+      "plan": [
+        16000,
+        6000
+      ]
+    }
   },
   "models": [
-    {"id": "claude-fable-5-2",  "engine": "claude", "label": "Claude Fable 5.2",  "in": 8.0,  "out": 40.0, "note": "가장 정밀 · 가장 비쌈"},
-    {"id": "claude-opus-5-5",   "engine": "claude", "label": "Claude Opus 5.5",   "in": 4.0,  "out": 20.0, "note": "기본 추천"},
-    {"id": "claude-sonnet-5-5", "engine": "claude", "label": "Claude Sonnet 5.5", "in": 2.0,  "out": 10.0, "note": "빠르고 저렴"},
-    {"id": "claude-haiku-5-5",  "engine": "claude", "label": "Claude Haiku 5.5",  "in": 0.1,  "out": 0.5,  "note": "최저가 · 간단한 분석용"},
-    {"id": "gpt-6-astra",   "engine": "openai", "label": "GPT-6 Astra",   "in": 10.0, "out": 50.0, "note": "OpenAI 최상위"},
-    {"id": "gpt-6.1-sol",   "engine": "openai", "label": "GPT-6.1 Sol",   "in": 2.0,  "out": 10.0, "note": "균형형"},
-    {"id": "gpt-6.1-terra", "engine": "openai", "label": "GPT-6.1 Terra", "in": 1.0,  "out": 5.0,  "note": "저렴"},
-    {"id": "gpt-6-luna",    "engine": "openai", "label": "GPT-6 Luna",    "in": 0.1,  "out": 0.5,  "note": "최저가"},
-    {"id": "gpt-5.6-sol",   "engine": "openai", "label": "GPT-5.6 Sol",   "in": 4.0,  "out": 20.0, "note": "프로모션가 2026-11-30까지"},
-    {"id": "gpt-5.5",       "engine": "openai", "label": "GPT-5.5",       "in": 5.0,  "out": 30.0, "note": "이전 세대"}
+    {
+      "id": "claude-fable-5-2",
+      "engine": "claude",
+      "label": "Claude Fable 5.2",
+      "in": 8.0,
+      "out": 40.0,
+      "note": "가장 정밀 · 가장 비쌈"
+    },
+    {
+      "id": "claude-opus-5-5",
+      "engine": "claude",
+      "label": "Claude Opus 5.5",
+      "in": 4.0,
+      "out": 20.0,
+      "note": "기본 추천"
+    },
+    {
+      "id": "claude-sonnet-5-5",
+      "engine": "claude",
+      "label": "Claude Sonnet 5.5",
+      "in": 2.0,
+      "out": 10.0,
+      "note": "빠르고 저렴"
+    },
+    {
+      "id": "claude-haiku-5-5",
+      "engine": "claude",
+      "label": "Claude Haiku 5.5",
+      "in": 0.1,
+      "out": 0.5,
+      "note": "최저가 · 간단한 분석용"
+    },
+    {
+      "id": "gpt-6-astra",
+      "engine": "openai",
+      "label": "GPT-6 Astra",
+      "in": 10.0,
+      "out": 50.0,
+      "note": "OpenAI 최상위"
+    },
+    {
+      "id": "gpt-6.1-sol",
+      "engine": "openai",
+      "label": "GPT-6.1 Sol",
+      "in": 2.0,
+      "out": 10.0,
+      "note": "균형형"
+    },
+    {
+      "id": "gpt-6.1-terra",
+      "engine": "openai",
+      "label": "GPT-6.1 Terra",
+      "in": 1.0,
+      "out": 5.0,
+      "note": "저렴"
+    },
+    {
+      "id": "gpt-6-luna",
+      "engine": "openai",
+      "label": "GPT-6 Luna",
+      "in": 0.1,
+      "out": 0.5,
+      "note": "최저가"
+    },
+    {
+      "id": "gpt-5.6-sol",
+      "engine": "openai",
+      "label": "GPT-5.6 Sol",
+      "in": 4.0,
+      "out": 20.0,
+      "note": "프로모션가 2026-11-30까지"
+    },
+    {
+      "id": "gpt-5.5",
+      "engine": "openai",
+      "label": "GPT-5.5",
+      "in": 5.0,
+      "out": 30.0,
+      "note": "이전 세대"
+    }
   ]
 }

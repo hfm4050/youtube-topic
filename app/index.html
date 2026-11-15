@@ -372,6 +372,10 @@ dialog::backdrop{background:#10141c88}
       <div class="kt"><span>Apify 토큰 <small class="sub" style="font-weight:500">— 인스타그램 계정·해시태그 수집</small></span><span class="pill" id="k-apify"></span></div>
       <input id="k-apify-in" type="password" autocomplete="off" placeholder="apify_api_…  (apify.com → Settings → API tokens)">
     </div>
+    <div class="keyrow">
+      <div class="kt"><span>원화 표시 환율 <small class="sub" style="font-weight:500">— 1달러당 원. 비용을 원으로 보여 줄 때 씁니다</small></span><span class="pill" id="k-rate"></span></div>
+      <div class="row" style="margin-top:8px"><input id="k-rate-in" type="text" inputmode="decimal" placeholder="예: 1340" style="flex:1"><button class="btn ghost sm" id="k-rate-save">환율 저장</button></div>
+    </div>
     <div class="keyrow sub">유튜브·틱톡 수집과 링크 가져오기는 키 없이 동작합니다. 키를 지우려면 「삭제」를 누르세요.</div>
     <div id="k-msg"></div>
     <div class="row" style="justify-content:flex-end;margin-top:6px">
@@ -584,8 +588,9 @@ function watch(jobId, box, label, onDone) {
 
 // ---------- 분석 모델 선택 · 건당 가격 ----------
 let M = {models: [], usd_krw: null};
-const usd = v => v == null ? '—' : '$' + (v < 0.1 ? v.toFixed(3) : v.toFixed(2));
-const krw = v => v == null || !M.usd_krw ? '' : ` (약 ${Math.max(1, Math.round(v * M.usd_krw)).toLocaleString()}원)`;
+// 비용은 원화로 표시한다 (달러 금액 × models.json 의 usd_krw). 100원 미만은 1원 단위, 그 이상은 10원 단위.
+const usd = v => { if (v == null) return '—'; const w = v * (M.usd_krw || 1340); return '약 ' + (w < 100 ? Math.max(1, Math.round(w)) : Math.round(w / 10) * 10).toLocaleString() + '원'; };
+const krw = () => '';
 const curModel = () => M.models.find(m => m.id === S.model) || M.models[0];
 async function loadModels() {
   M = await api('/api/models');
@@ -597,10 +602,11 @@ async function loadModels() {
 }
 function renderPrices() {
   const m = curModel(); if (!m) return;
-  $('#model').title = `${m.label} — 입력 $${m.in} · 출력 $${m.out} / 100만 토큰 · ${m.note || ''} · 건당 = 분석 + 대본 5개 + 제작 기획 · 가격 확인일 ${M.checked}`;
+  const w = x => Math.round(x * (M.usd_krw || 1340)).toLocaleString() + '원';
+  $('#model').title = `${m.label} — 입력 ${w(m.in)} · 출력 ${w(m.out)} / 100만 토큰 · ${m.note || ''} · 건당 = 분석 + 대본 5개 + 제작 기획 · 가격 확인일 ${M.checked} · 환율 1달러 ${(M.usd_krw||1340).toLocaleString()}원 적용`;
   $$('[data-price]').forEach(el => { const p = m.per[el.dataset.price];
     el.innerHTML = `${esc(m.label)} · ${p.measured ? '실측 평균' : '예상'} <b>${usd(p.usd)}</b>${krw(p.usd)}${m.ready ? '' : ' · <b style="color:#B3261E">API 키 필요</b>'}`;
-    el.title = m.engine === 'claude' && M.claude_billing === 'subscription' ? 'Claude 구독 로그인으로 실행하면 요금제에 포함됩니다. 표시 금액은 API 환산가입니다.' : 'API 사용량만큼 과금됩니다.'; });
+    el.title = m.engine === 'claude' && M.claude_billing === 'subscription' ? 'Claude 구독 로그인으로 실행하면 요금제에 포함됩니다. 표시 금액은 API 환산가를 원화로 바꾼 값입니다.' : 'API 사용량만큼 달러로 과금되며, 표시는 원화 환산입니다.'; });
 }
 $('#model').onchange = () => { S.model = $('#model').value; store.set('model', S.model); renderPrices(); };
 
@@ -610,6 +616,7 @@ async function loadKeys() {
   pill($('#k-anth'), d.keys.ANTHROPIC_API_KEY); pill($('#k-apify'), d.keys.APIFY_TOKEN); pill($('#k-oai'), d.keys.OPENAI_API_KEY);
   $('#k-cli').textContent = !d.claude_installed ? 'Claude Code CLI 가 설치돼 있지 않습니다.' : d.claude_cli ? 'Claude Code CLI 로그인됨 — API 키 없이도 분석이 동작합니다.' : d.keys.ANTHROPIC_API_KEY ? 'CLI 로그인은 없지만 등록한 API 키로 분석합니다(사용량만큼 과금).' : 'CLI 로그인 없음 — 여기에 API 키를 등록하거나 터미널에서 claude 실행 후 /login 하세요.';
   S.apify = d.keys.APIFY_TOKEN; if (!$('#igpanel').hidden) renderIg();
+  $('#k-rate').textContent = `현재 ${(M.usd_krw || 1340).toLocaleString()}원`;
 }
 $('#keys-open').onclick = () => { $('#k-msg').innerHTML = ''; $('#keys').showModal(); loadKeys(); };
 $('#k-close').onclick = () => $('#keys').close();
@@ -625,6 +632,11 @@ $('#k-save').onclick = () => {
   postKeys(body, '저장했습니다.');
 };
 $('#k-del-anth').onclick = () => postKeys({ANTHROPIC_API_KEY: ''}, 'Anthropic API 키를 삭제했습니다.');
+$('#k-rate-save').onclick = async () => {
+  const r = await api('/api/rate', {usd_krw: $('#k-rate-in').value.replace(/[^0-9.]/g, '')});
+  $('#k-msg').innerHTML = `<div class="note"${r.error ? '' : ' style="background:#E9F7EF;border-color:#BFE3CD;color:#1E5E3F"'}>${esc(r.error || '환율을 저장했습니다. 모든 비용 표시에 바로 적용됩니다.')}</div>`;
+  if (!r.error) { $('#k-rate-in').value = ''; await loadModels(); loadKeys(); }
+};
 $('#k-del-oai').onclick = () => postKeys({OPENAI_API_KEY: ''}, 'OpenAI API 키를 삭제했습니다.');
 $('#k-del-apify').onclick = () => postKeys({APIFY_TOKEN: ''}, 'Apify 토큰을 삭제했습니다.');
 

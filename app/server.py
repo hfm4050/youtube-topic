@@ -439,6 +439,19 @@ class H(BaseHTTPRequestHandler):
                 label = {'analysis': '화면·대본 분석', 'scripts5': '대본 5개 작성', 'plan': '제작 기획 작성'}[stepname]
                 job = run_job(stepname, [llm_step(label, stepname, rid, fit, body.get('model') or models_cfg()['default'])], rid)
                 return self.send(200, {'job': job['id'], 'ref': rid})
+            if path == '/api/rate':  # 원화 표시용 환율 저장
+                try:
+                    rate = float(body.get('usd_krw'))
+                except (TypeError, ValueError):
+                    rate = 0
+                if not 500 <= rate <= 5000:
+                    return self.send(400, {'error': '환율은 500~5000 사이 숫자로 입력해 주세요.'})
+                pth = os.path.join(APP, 'models.json')
+                c = json.load(open(pth, encoding='utf-8'))
+                c['usd_krw'] = round(rate, 1)
+                c['usd_krw_note'] = '원화 표시용 환율. ' + time.strftime('%Y-%m-%d') + ' 대시보드에서 직접 입력한 값.'
+                json.dump(c, open(pth, 'w', encoding='utf-8'), ensure_ascii=False, indent=2)
+                return self.send(200, {'ok': True, 'usd_krw': c['usd_krw']})
             if path == '/api/keys':  # 토큰·API 키 등록/삭제 (.env — 값은 화면에 되돌려 주지 않는다)
                 for k, pat in KEYS.items():
                     if k in body:
