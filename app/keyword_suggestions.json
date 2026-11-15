@@ -1,43 +1,365 @@
 {
   "_설명": "대시보드 「수집 키워드」 편집기의 추천 목록. 채널별 국내(kr)·해외(global) 유튜브 검색어. 실제 수집에 쓰는 목록은 reels/config.json 의 channels[채널].kr / global 이고, 여기 있는 것은 누르면 추가되는 후보일 뿐이다.",
   "유이선생": {
-    "kr": ["50대 리프팅 후기", "울쎄라 써마지 차이 원장", "스킨부스터 효과 의사", "팔자주름 필러 부작용", "40대 동안 시술 추천", "성형외과 상담 브이로그", "리프팅 시술 순서 쇼츠"],
-    "global": ["plastic surgeon reacts shorts", "non surgical facelift over 50", "ultherapy vs thermage doctor", "filler gone wrong surgeon explains", "skin tightening treatments explained", "aesthetic doctor day in the life"]
+    "kr": [
+      "50대 리프팅 후기",
+      "울쎄라 써마지 차이 원장",
+      "스킨부스터 효과 의사",
+      "팔자주름 필러 부작용",
+      "40대 동안 시술 추천",
+      "성형외과 상담 브이로그",
+      "리프팅 시술 순서 쇼츠"
+    ],
+    "global": [
+      "plastic surgeon reacts shorts",
+      "non surgical facelift over 50",
+      "ultherapy vs thermage doctor",
+      "filler gone wrong surgeon explains",
+      "skin tightening treatments explained",
+      "aesthetic doctor day in the life"
+    ]
   },
   "스타라인": {
-    "kr": ["안면거상 수술 과정 원장", "미니거상 후기 50대", "하안검 수술 회복 브이로그", "눈밑지방재배치 부작용", "실리프팅 유지기간 의사", "목거상 넥리프트 설명", "눈썹거상 후기"],
-    "global": ["facelift recovery day by day", "neck lift surgeon explains", "lower blepharoplasty before you decide", "mini facelift vs full facelift", "thread lift truth surgeon", "facelift at 50 what to expect"]
+    "kr": [
+      "안면거상 수술 과정 원장",
+      "미니거상 후기 50대",
+      "하안검 수술 회복 브이로그",
+      "눈밑지방재배치 부작용",
+      "실리프팅 유지기간 의사",
+      "목거상 넥리프트 설명",
+      "눈썹거상 후기"
+    ],
+    "global": [
+      "facelift recovery day by day",
+      "neck lift surgeon explains",
+      "lower blepharoplasty before you decide",
+      "mini facelift vs full facelift",
+      "thread lift truth surgeon",
+      "facelift at 50 what to expect"
+    ]
   },
   "성장인": {
-    "kr": ["갱년기 초기 증상 산부인과", "폐경 후 건강검진 의사", "갱년기 관절통 원인", "안면홍조 관리법 의사", "자궁근종 수술 안해도", "골다공증 검사 50대 여성", "산부인과 의사 쇼츠"],
-    "global": ["menopause symptoms nobody tells you", "perimenopause doctor explains shorts", "hot flashes treatment gynecologist", "menopause joint pain doctor", "obgyn answers questions shorts", "bone density after menopause"]
+    "kr": [
+      "갱년기 초기 증상 산부인과",
+      "폐경 후 건강검진 의사",
+      "갱년기 관절통 원인",
+      "안면홍조 관리법 의사",
+      "자궁근종 수술 안해도",
+      "골다공증 검사 50대 여성",
+      "산부인과 의사 쇼츠"
+    ],
+    "global": [
+      "menopause symptoms nobody tells you",
+      "perimenopause doctor explains shorts",
+      "hot flashes treatment gynecologist",
+      "menopause joint pain doctor",
+      "obgyn answers questions shorts",
+      "bone density after menopause"
+    ]
   },
   "코스모어": {
-    "kr": ["50대 레티놀 사용법", "화장품 성분 분석 쇼츠", "스킨케어 다이어트 3단계", "PDRN 화장품 효과", "기미 미백 기능성 추천", "화장품 개발자 팩트체크", "50대 기초화장품 순서"],
-    "global": ["skincare routine over 50 dermatologist", "retinol for beginners over 50", "cosmetic chemist reacts shorts", "skincare ingredients that actually work", "minimalist skincare routine", "skincare myths debunked shorts"]
+    "kr": [
+      "50대 레티놀 사용법",
+      "화장품 성분 분석 쇼츠",
+      "스킨케어 다이어트 3단계",
+      "PDRN 화장품 효과",
+      "기미 미백 기능성 추천",
+      "화장품 개발자 팩트체크",
+      "50대 기초화장품 순서"
+    ],
+    "global": [
+      "skincare routine over 50 dermatologist",
+      "retinol for beginners over 50",
+      "cosmetic chemist reacts shorts",
+      "skincare ingredients that actually work",
+      "minimalist skincare routine",
+      "skincare myths debunked shorts"
+    ]
   },
   "홍성옥교수": {
-    "kr": ["임플란트 수술 전 주의사항", "턱관절 통증 구강외과", "구강악안면외과 교수 브이로그", "안면비대칭 원인 수술", "입냄새 원인 치과의사", "턱 골절 수술 과정", "치과 수면마취 안전"],
-    "global": ["oral surgeon explains shorts", "dental implant what to expect", "jaw surgery recovery day by day", "tmj pain doctor explains", "maxillofacial surgeon day in the life", "dentist reacts shorts"]
+    "kr": [
+      "임플란트 수술 전 주의사항",
+      "턱관절 통증 구강외과",
+      "구강악안면외과 교수 브이로그",
+      "안면비대칭 원인 수술",
+      "입냄새 원인 치과의사",
+      "턱 골절 수술 과정",
+      "치과 수면마취 안전"
+    ],
+    "global": [
+      "oral surgeon explains shorts",
+      "dental implant what to expect",
+      "jaw surgery recovery day by day",
+      "tmj pain doctor explains",
+      "maxillofacial surgeon day in the life",
+      "dentist reacts shorts"
+    ]
   },
   "킴스히어링": {
-    "kr": ["보청기 가격 비교 2026", "보청기 처음 착용 반응", "이명 원인 치료 청능사", "부모님 난청 대화법", "보청기 종류 귓속형 오픈형", "TV 소리 안들림 난청", "보청기 센터 브이로그"],
-    "global": ["hearing aids first time reaction", "audiologist explains shorts", "tinnitus relief audiologist", "otc hearing aids review", "how to talk to parents about hearing loss", "hearing test what to expect"]
+    "kr": [
+      "보청기 가격 비교 2026",
+      "보청기 처음 착용 반응",
+      "이명 원인 치료 청능사",
+      "부모님 난청 대화법",
+      "보청기 종류 귓속형 오픈형",
+      "TV 소리 안들림 난청",
+      "보청기 센터 브이로그"
+    ],
+    "global": [
+      "hearing aids first time reaction",
+      "audiologist explains shorts",
+      "tinnitus relief audiologist",
+      "otc hearing aids review",
+      "how to talk to parents about hearing loss",
+      "hearing test what to expect"
+    ]
   },
   "손해사정사": {
-    "kr": ["실손보험 청구 꿀팁", "암보험 진단비 거절 사례", "교통사고 합의금 손해사정사", "보험금 지급 거절 대응", "치매보험 청구 방법", "보험 리모델링 주의", "후유장해 보험금 청구"],
-    "global": ["insurance claim denied what to do", "public adjuster explains shorts", "car accident settlement tips", "health insurance denial appeal", "insurance adjuster secrets"]
+    "kr": [
+      "실손보험 청구 꿀팁",
+      "암보험 진단비 거절 사례",
+      "교통사고 합의금 손해사정사",
+      "보험금 지급 거절 대응",
+      "치매보험 청구 방법",
+      "보험 리모델링 주의",
+      "후유장해 보험금 청구"
+    ],
+    "global": [
+      "insurance claim denied what to do",
+      "public adjuster explains shorts",
+      "car accident settlement tips",
+      "health insurance denial appeal",
+      "insurance adjuster secrets"
+    ]
   },
   "마리안나": {
-    "kr": ["호스피스 병동 하루", "임종 징후 간호사 설명", "말기암 가족 돌봄", "연명치료 중단 결정", "완화의료 의사 이야기", "사전연명의료의향서 작성"],
-    "global": ["hospice nurse explains shorts", "what happens at end of life", "palliative care doctor stories", "caring for dying parent", "signs someone is near death nurse"]
+    "kr": [
+      "호스피스 병동 하루",
+      "임종 징후 간호사 설명",
+      "말기암 가족 돌봄",
+      "연명치료 중단 결정",
+      "완화의료 의사 이야기",
+      "사전연명의료의향서 작성"
+    ],
+    "global": [
+      "hospice nurse explains shorts",
+      "what happens at end of life",
+      "palliative care doctor stories",
+      "caring for dying parent",
+      "signs someone is near death nurse"
+    ]
   },
   "판교": {
-    "kr": ["건강검진 결과지 보는 법", "직장인 만성피로 내과", "대장내시경 준비 꿀팁", "혈당 스파이크 내과의사", "콜레스테롤 수치 관리", "독감 예방접종 시기", "위내시경 수면 비수면"],
-    "global": ["doctor explains lab results shorts", "annual checkup what doctors check", "colonoscopy prep tips doctor", "blood sugar spikes explained", "high cholesterol doctor explains shorts"]
+    "kr": [
+      "건강검진 결과지 보는 법",
+      "직장인 만성피로 내과",
+      "대장내시경 준비 꿀팁",
+      "혈당 스파이크 내과의사",
+      "콜레스테롤 수치 관리",
+      "독감 예방접종 시기",
+      "위내시경 수면 비수면"
+    ],
+    "global": [
+      "doctor explains lab results shorts",
+      "annual checkup what doctors check",
+      "colonoscopy prep tips doctor",
+      "blood sugar spikes explained",
+      "high cholesterol doctor explains shorts"
+    ]
   },
   "건강한마케팅": {
-    "kr": ["병원 유튜브 운영 방법", "의료광고 심의 주의사항", "병원 인스타 릴스 마케팅", "클로드 코드 자동화 마케팅", "쇼츠 기획 후킹 문장", "카드뉴스 자동 제작 AI", "마케팅 대행사 브이로그", "유튜브 알고리즘 2026"],
-    "global": ["medical practice marketing strategy", "how to go viral on reels 2026", "ai content creation workflow", "claude code for marketers", "hook formulas for short form video", "content repurposing system", "doctor social media marketing"]
+    "kr": [
+      "병원 유튜브 운영 방법",
+      "의료광고 심의 주의사항",
+      "병원 인스타 릴스 마케팅",
+      "클로드 코드 자동화 마케팅",
+      "쇼츠 기획 후킹 문장",
+      "카드뉴스 자동 제작 AI",
+      "마케팅 대행사 브이로그",
+      "유튜브 알고리즘 2026"
+    ],
+    "global": [
+      "medical practice marketing strategy",
+      "how to go viral on reels 2026",
+      "ai content creation workflow",
+      "claude code for marketers",
+      "hook formulas for short form video",
+      "content repurposing system",
+      "doctor social media marketing"
+    ]
+  },
+  "_instagram": {
+    "_설명": "인스타그램 해시태그 추천(공백 없이). 틱톡 추천은 유튜브 추천 목록을 그대로 쓴다.",
+    "유이선생": {
+      "kr": [
+        "리프팅",
+        "울쎄라",
+        "써마지",
+        "동안시술",
+        "성형외과",
+        "안티에이징",
+        "스킨부스터"
+      ],
+      "global": [
+        "facelift",
+        "antiaging",
+        "plasticsurgeon",
+        "botox",
+        "skintightening"
+      ]
+    },
+    "스타라인": {
+      "kr": [
+        "안면거상",
+        "미니거상",
+        "하안검",
+        "눈밑지방재배치",
+        "실리프팅",
+        "눈성형"
+      ],
+      "global": [
+        "facelift",
+        "deepplanefacelift",
+        "blepharoplasty",
+        "necklift",
+        "facialplasticsurgery"
+      ]
+    },
+    "성장인": {
+      "kr": [
+        "갱년기",
+        "폐경",
+        "여성건강",
+        "산부인과",
+        "갱년기증상",
+        "골다공증"
+      ],
+      "global": [
+        "menopause",
+        "perimenopause",
+        "womenshealth",
+        "obgyn",
+        "hotflashes"
+      ]
+    },
+    "코스모어": {
+      "kr": [
+        "스킨케어",
+        "50대피부",
+        "레티놀",
+        "화장품성분",
+        "기초화장품",
+        "피부관리"
+      ],
+      "global": [
+        "skincare",
+        "skincareover50",
+        "retinol",
+        "cosmeticchemist",
+        "skincareroutine"
+      ]
+    },
+    "홍성옥교수": {
+      "kr": [
+        "임플란트",
+        "사랑니",
+        "턱관절",
+        "구강외과",
+        "치과의사",
+        "양악수술"
+      ],
+      "global": [
+        "oralsurgeon",
+        "dentalimplants",
+        "jawsurgery",
+        "wisdomteeth",
+        "dentist"
+      ]
+    },
+    "킴스히어링": {
+      "kr": [
+        "보청기",
+        "난청",
+        "이명",
+        "청력검사",
+        "부모님선물",
+        "보청기추천"
+      ],
+      "global": [
+        "hearingaids",
+        "hearingloss",
+        "audiologist",
+        "tinnitus",
+        "hearinghealth"
+      ]
+    },
+    "손해사정사": {
+      "kr": [
+        "손해사정사",
+        "보험금청구",
+        "실손보험",
+        "암보험",
+        "교통사고합의금",
+        "보험꿀팁"
+      ],
+      "global": [
+        "insuranceclaim",
+        "publicadjuster",
+        "insurancetips",
+        "claimdenied"
+      ]
+    },
+    "마리안나": {
+      "kr": [
+        "호스피스",
+        "완화의료",
+        "임종",
+        "말기암",
+        "간병",
+        "연명의료"
+      ],
+      "global": [
+        "hospice",
+        "hospicenurse",
+        "palliativecare",
+        "endoflifecare"
+      ]
+    },
+    "판교": {
+      "kr": [
+        "건강검진",
+        "내과",
+        "대장내시경",
+        "혈당관리",
+        "직장인건강",
+        "위내시경"
+      ],
+      "global": [
+        "healthcheckup",
+        "doctorexplains",
+        "bloodsugar",
+        "cholesterol",
+        "preventivehealth"
+      ]
+    },
+    "건강한마케팅": {
+      "kr": [
+        "병원마케팅",
+        "마케팅대행사",
+        "릴스마케팅",
+        "숏폼마케팅",
+        "AI마케팅",
+        "콘텐츠마케팅",
+        "클로드"
+      ],
+      "global": [
+        "healthcaremarketing",
+        "medicalmarketing",
+        "reelstips",
+        "contentmarketing",
+        "aitools",
+        "claudeai"
+      ]
+    }
   }
 }

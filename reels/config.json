@@ -175,10 +175,27 @@
         },
         "hashtags": {
           "GLOBAL": [
-            "ai"
+            "aimarketing",
+            "marketing",
+            "youtube",
+            "aeo",
+            "geo"
           ],
           "KR": [
-            "마케팅"
+            "마케팅",
+            "유튜브",
+            "aeo",
+            "geo"
+          ]
+        }
+      },
+      "tiktok": {
+        "keywords": {
+          "GLOBAL": [
+            "healthcare marketing tips shorts"
+          ],
+          "KR": [
+            "병원 마케팅 유튜브 쇼츠"
           ]
         }
       }
@@ -215,5 +232,9 @@
         "geo"
       ]
     }
+  },
+  "tiktok": {
+    "actor": "clockworks~tiktok-scraper",
+    "results_per_query": 15
   }
 }

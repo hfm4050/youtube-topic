@@ -6,6 +6,7 @@
 
   python3 reels/scripts/collect.py youtube [--fit 유이선생] [--region KR|GLOBAL] [--period week|month]
   python3 reels/scripts/collect.py instagram [--fit 채널] # APIFY_TOKEN 필요, 채널별 instagram.accounts/hashtags
+  python3 reels/scripts/collect.py tiktok [--fit 채널]    # APIFY_TOKEN 필요, 채널별 tiktok.keywords
   python3 reels/scripts/collect.py add <url> [--fit 채널] # 우연히 본 링크 1개 직접 추가 (유튜브·틱톡·인스타)
   python3 reels/scripts/collect.py score                 # 배수·참여율 다시 계산해 상태 갱신
   python3 reels/scripts/collect.py list [--status 검수대기] [--fit 채널] [--region KR]
@@ -192,6 +193,27 @@ def ig_item(it, reg, source):
     }
 
 
+def to_hashtag(s):
+    """유튜브 검색어 → 인스타 해시태그: 공백·기호 제거, '쇼츠/shorts' 같은 플랫폼 단어 제거."""
+    import re as _re
+    s = _re.sub(r'(?i)\b(shorts?|youtube|유튜브|쇼츠|릴스|영상)\b', ' ', s)
+    s = _re.sub(r'[^\w가-힣]', '', s)
+    return s.lower()[:30]
+
+
+def plat_keywords(c, plat, reg):
+    """채널 c 의 플랫폼별 키워드. 인스타(해시태그)·틱톡(검색어)이 비어 있으면 유튜브 키워드를 기본으로 쓴다.
+    반환: (키워드 목록, 유튜브에서 가져왔는지)"""
+    key = 'hashtags' if plat == 'instagram' else 'keywords'
+    own = [x.strip() for x in (((c.get(plat) or {}).get(key) or {}).get(reg) or []) if str(x).strip()]
+    if own:
+        return own, False
+    yt = c.get('kr' if reg == 'KR' else 'global') or []
+    if plat == 'instagram':
+        yt = list(dict.fromkeys(h for h in (to_hashtag(x) for x in yt) if len(h) >= 2))
+    return yt, True
+
+
 def ig_sources(fit=None):
     """수집 대상 묶음 [(채널 또는 None, 지역, 계정 목록, 해시태그 목록)].
     채널별 목록은 config.json channels[채널].instagram = {"accounts": {"GLOBAL": [], "KR": []}, "hashtags": {...}},
@@ -203,6 +225,8 @@ def ig_sources(fit=None):
         for reg in ('GLOBAL', 'KR'):
             accs = [x.lstrip('@').strip() for x in ((ig.get('accounts') or {}).get(reg) or []) if x.strip()]
             tags = [x.lstrip('#').strip() for x in ((ig.get('hashtags') or {}).get(reg) or []) if x.strip()]
+            if ch and not tags:                       # 채널 전용 해시태그가 없으면 유튜브 키워드에서 기본 생성
+                tags, _ = plat_keywords(CFG['channels'][ch], 'instagram', reg)
             if accs or tags: out.append((ch, reg, accs, tags))
     return out
 
@@ -218,9 +242,13 @@ def cmd_instagram(a):
             items = apify(ig['actor_reels'], {'username': accs, 'resultsLimit': ig['results_per_account']})
             got += [dict(x, fit=ch) for x in (ig_item(it, reg, '계정') for it in items) if x]
         if tags:
-            print(f'[{reg}] {ch or "공용"} · 해시태그 {len(tags)}개: {", ".join(tags)}', flush=True)
-            items = apify(ig['actor_hashtag'], {'hashtags': tags, 'resultsType': 'reels', 'resultsLimit': ig['results_per_account']})
-            got += [dict(x, fit=ch) for x in (ig_item(it, reg, '해시태그') for it in items) if x]
+            for tag in tags:                 # 해시태그마다 따로 불러 진행률과 수집 경로를 남긴다
+                print(f'[{reg}] {ch or "공용"} · #{tag}', flush=True)
+                try:
+                    items = apify(ig['actor_hashtag'], {'hashtags': [tag], 'resultsType': 'reels', 'resultsLimit': ig['results_per_account']})
+                except Exception as e:
+                    print(f'  ! 수집 실패: {str(e)[:120]}', file=sys.stderr, flush=True); continue
+                got += [dict(x, fit=ch) for x in (ig_item(it, reg, f'해시태그:{tag}') for it in items) if x]
     if not got: sys.exit('가져온 릴스가 없습니다. 계정 이름·해시태그 철자와 Apify 실행 한도를 확인하세요.')
     by = {}
     for r in got:
@@ -230,6 +258,48 @@ def cmd_instagram(a):
         if len(vs) >= 5: r['author_median_views'] = int(statistics.median(vs))
         upsert(refs, r)
     print(f'릴스 {len(got)}건 반영', flush=True)
+    for k, v in load().items(): refs.setdefault(k, v)   # 수집 도중 다른 창에서 추가된 링크 보존
+    save(refs); summary(refs)
+
+
+# ---------------- TikTok (Apify) ----------------
+def tt_item(it, reg, source):
+    vid = str(it.get('id') or '')
+    if not vid or it.get('errorCode'): return None
+    am, vm = it.get('authorMeta') or {}, it.get('videoMeta') or {}
+    return {
+        'id': f'tt_{vid}', 'platform': 'tiktok', 'region': reg, 'source': source,
+        'url': it.get('webVideoUrl') or f"https://www.tiktok.com/@{am.get('name', '_')}/video/{vid}",
+        'title': (it.get('text') or '')[:300], 'author': am.get('name'), 'author_followers': am.get('fans'),
+        'views': it.get('playCount'), 'likes': it.get('diggCount'), 'comments': it.get('commentCount'),
+        'duration': vm.get('duration'), 'uploaded': (it.get('createTimeISO') or '')[:10] or None, 'thumb': vm.get('coverUrl'),
+    }
+
+
+def cmd_tiktok(a):
+    """채널별 틱톡 검색어(config.json channels[채널].tiktok.keywords = {"GLOBAL": [], "KR": []})로 수집."""
+    refs, tt = load(), CFG.get('tiktok') or {'actor': 'clockworks~tiktok-scraper', 'results_per_query': 15}
+    got, n = [], 0
+    for ch, c in CFG['channels'].items():
+        if a.fit and ch != a.fit: continue
+        for reg in ('GLOBAL', 'KR'):
+            kws, inherited = plat_keywords(c, 'tiktok', reg)
+            if inherited and kws: print(f'[{reg}] {ch}: 틱톡 키워드가 없어 유튜브 키워드 {len(kws)}개를 기본으로 씁니다', flush=True)
+            for q in kws:
+                n += 1
+                print(f'[{reg}] {ch} · {q}', flush=True)
+                try:
+                    items = apify(tt['actor'], {'searchQueries': [q], 'resultsPerPage': tt['results_per_query'],
+                                                'shouldDownloadVideos': False, 'shouldDownloadCovers': False})
+                except Exception as e:
+                    print(f'  ! 검색 실패: {str(e)[:120]}', file=sys.stderr, flush=True); continue
+                rows = [dict(x, fit=ch) for x in (tt_item(it, reg, f'키워드:{q}') for it in items) if x]
+                print(f'  {len(rows)}건', flush=True)
+                got += rows
+    if not n: sys.exit('수집할 틱톡 키워드가 없습니다. 대시보드 「틱톡」 탭에서 키워드를 먼저 저장하세요.')
+    if not got: sys.exit('가져온 틱톡 영상이 없습니다. 키워드와 Apify 실행 한도를 확인하세요.')
+    for r in got: upsert(refs, r)
+    print(f'틱톡 {len(got)}건 반영', flush=True)
     for k, v in load().items(): refs.setdefault(k, v)   # 수집 도중 다른 창에서 추가된 링크 보존
     save(refs); summary(refs)
 
@@ -330,6 +400,7 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser(); sp = ap.add_subparsers(dest='cmd', required=True)
     p = sp.add_parser('youtube'); p.add_argument('--fit'); p.add_argument('--region', choices=['KR', 'GLOBAL']); p.add_argument('--period', default='week', choices=['week', 'month'])
     p = sp.add_parser('instagram'); p.add_argument('--fit')
+    p = sp.add_parser('tiktok'); p.add_argument('--fit')
     p = sp.add_parser('add'); p.add_argument('url'); p.add_argument('--fit'); p.add_argument('--region', choices=['KR', 'GLOBAL'])
     sp.add_parser('score'); sp.add_parser('selftest')
     p = sp.add_parser('list'); p.add_argument('--status'); p.add_argument('--fit'); p.add_argument('--region'); p.add_argument('-n', type=int, default=40)

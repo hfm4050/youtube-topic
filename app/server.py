@@ -54,6 +54,53 @@ def clean_list(v, strip):
     return out[:50]
 
 
+def to_hashtag(s):
+    s = re.sub(r'(?i)\b(shorts?|youtube|유튜브|쇼츠|릴스|영상)\b', ' ', s)
+    return re.sub(r'[^\w가-힣]', '', s).lower()[:30]
+
+
+def kw_get(c, ch, plat):
+    """채널의 플랫폼별 수집 키워드 {kr, global, inherited}. 인스타·틱톡이 비어 있으면 유튜브 키워드를 기본으로 보여 준다
+    (인스타는 해시태그 형태로 변환). collect.py 의 plat_keywords 와 같은 규칙."""
+    v = c['channels'][ch]
+    yt = {'kr': list(v.get('kr', [])), 'global': list(v.get('global', []))}
+    if plat == 'youtube':
+        return {**yt, 'inherited': False}
+    key = 'hashtags' if plat == 'instagram' else 'keywords'
+    d = (v.get(plat) or {}).get(key) or {}
+    own = {'kr': [x for x in (d.get('KR') or []) if str(x).strip()], 'global': [x for x in (d.get('GLOBAL') or []) if str(x).strip()]}
+    if own['kr'] or own['global']:
+        return {**own, 'inherited': False}
+    if plat == 'instagram':
+        conv = lambda L: list(dict.fromkeys(h for h in (to_hashtag(x) for x in L) if len(h) >= 2))
+        return {'kr': conv(yt['kr']), 'global': conv(yt['global']), 'inherited': True}
+    return {**yt, 'inherited': True}
+
+
+def kw_set(c, ch, plat, kr, gl):
+    v = c['channels'][ch]
+    if plat == 'youtube':
+        v['kr'], v['global'] = kr, gl
+    else:
+        v.setdefault(plat, {})['hashtags' if plat == 'instagram' else 'keywords'] = {'GLOBAL': gl, 'KR': kr}
+
+
+def suggest_view(c):
+    """추천 키워드 {채널: {youtube|instagram|tiktok: {kr, global}}}. 틱톡은 유튜브 추천 + 저장된 유튜브 키워드."""
+    sg = json.loads(read(os.path.join(APP, 'keyword_suggestions.json'), '{}') or '{}')
+    ig, out = sg.get('_instagram') or {}, {}
+    for ch in c['channels']:
+        yt = sg.get(ch) or {'kr': [], 'global': []}
+        cur = kw_get(c, ch, 'youtube')
+        merge = lambda a, b: list(dict.fromkeys(list(a) + list(b)))
+        out[ch] = {'youtube': yt, 'instagram': ig.get(ch) or {'kr': [], 'global': []},
+                   'tiktok': {'kr': merge(cur['kr'], yt.get('kr', [])), 'global': merge(cur['global'], yt.get('global', []))}}
+    return out
+
+
+PLATS = ('youtube', 'instagram', 'tiktok')
+
+
 def ig_settings(c, fit):
     ig = (c['channels'][fit].get('instagram') if fit else c['instagram']) or {}
     return {k: {r: list((ig.get(k) or {}).get(r) or []) for r in ('GLOBAL', 'KR')} for k in ('accounts', 'hashtags')}
@@ -169,6 +216,10 @@ def add_signals(refs):
         if rate(r) is not None:
             by.setdefault(group(r), []).append(rate(r))
     med = {g: sorted(v)[len(v) // 2] for g, v in by.items() if len(v) >= 8}
+    try:
+        cfg_thr = cfg()['thresholds']['min_views_for_outlier']
+    except Exception:
+        cfg_thr = {}
     vby = {}
     for r in refs:
         if r.get('views'):
@@ -180,13 +231,16 @@ def add_signals(refs):
         # 계정의 평소 조회수를 모르는 항목(outlier 없음)은 같은 플랫폼 보관함 중앙값 대비 배수를 따로 둔다
         vm = vmed.get(group(r))
         r['views_x'] = round(r['views'] / vm, 1) if r.get('outlier') is None and vm and r.get('views') else None
+        # 배지용: 조회 배수는 최소 조회수(국내 1만·해외 5만, config thresholds)를 넘을 때만 의미 있다
+        mv = cfg_thr.get(r.get('region') or 'KR', 10000)
+        r['views_ok'] = bool(r.get('views') and r['views'] >= mv)
         r['has_thumb'] = bool(r.get('thumb')) or os.path.exists(os.path.join(THUMBS, r['id'] + '.jpg'))
     return refs
 
 
 # ---------------- 백그라운드 작업 (진행률 · 남은 시간) ----------------
 STATS = os.path.join(REELS, 'data', 'job_stats.json')   # 단계별 실제 소요 시간 기록 → 다음 예상 시간에 반영
-EST = {'add': 8, 'fetch': 45, 'analysis': 300, 'scripts5': 240, 'plan': 180, 'instagram': 180, 'yt_query': 35}
+EST = {'add': 8, 'fetch': 45, 'analysis': 300, 'scripts5': 240, 'plan': 180, 'instagram': 180, 'yt_query': 35, 'ig_query': 45, 'tt_query': 40}
 
 
 def est_for(key, default=None):
@@ -441,9 +495,9 @@ class H(BaseHTTPRequestHandler):
             c = cfg()
             return self.send(200, {'refs': load_refs(), 'channels': list(c['channels']), 'statuses': STATUSES,
                                    'brands': {k: v.get('brand') for k, v in c['channels'].items()},
-                                   'keywords': {k: {'kr': v.get('kr', []), 'global': v.get('global', [])} for k, v in c['channels'].items()},
+                                   'keywords': {ch: {pl: kw_get(c, ch, pl) for pl in PLATS} for ch in c['channels']},
                                    'apify': bool(ENV.get('APIFY_TOKEN')), 'claude': bool(shutil.which('claude')),
-                                   'suggest': {k: v for k, v in json.loads(read(os.path.join(APP, 'keyword_suggestions.json'), '{}') or '{}').items() if not k.startswith('_')},
+                                   'suggest': suggest_view(c),
                                    'instagram': {'': ig_settings(c, None), **{ch: ig_settings(c, ch) for ch in c['channels']}}})
         if path == '/api/models':
             return self.send(200, models_view())
@@ -538,21 +592,24 @@ class H(BaseHTTPRequestHandler):
                             return self.send(400, {'error': f'{k} 형식이 올바르지 않습니다.'})
                         save_dotenv(k, v)
                 return self.send(200, {'ok': True, 'keys': {k: bool(ENV.get(k)) for k in KEYS}})
-            if path == '/api/keywords':  # 채널별 유튜브 수집 키워드 저장
+            if path == '/api/keywords':  # 채널별·플랫폼별 수집 키워드 저장
+                plat = body.get('platform') if body.get('platform') in PLATS else 'youtube'
                 if not fit:
                     return self.send(400, {'error': '고객 채널을 먼저 선택해 주세요.'})
                 def kws(v):
                     out = []
                     for x in v if isinstance(v, list) else []:
                         x = re.sub(r'\s+', ' ', str(x)).strip()[:60]
+                        if plat == 'instagram':          # 해시태그: # 과 공백 제거
+                            x = re.sub(r'[#\s]', '', x)
                         if x and x not in out:
                             out.append(x)
                     return out[:20]
                 p = os.path.join(REELS, 'config.json')
                 c = json.load(open(p, encoding='utf-8'))
-                c['channels'][fit]['kr'], c['channels'][fit]['global'] = kws(body.get('kr')), kws(body.get('global'))
+                kw_set(c, fit, plat, kws(body.get('kr')), kws(body.get('global')))
                 json.dump(c, open(p, 'w', encoding='utf-8'), ensure_ascii=False, indent=2)
-                return self.send(200, {'ok': True, 'kr': c['channels'][fit]['kr'], 'global': c['channels'][fit]['global']})
+                return self.send(200, {'ok': True, 'platform': plat, **kw_get(c, fit, plat)})
             if path == '/api/instagram':  # 인스타 수집 설정 저장 (토큰은 .env, 계정·해시태그는 config.json)
                 if 'token' in body:
                     tok = str(body.get('token') or '').strip()
@@ -585,7 +642,29 @@ class H(BaseHTTPRequestHandler):
                 if not ENV.get('APIFY_TOKEN'):
                     return self.send(400, {'error': 'Apify 토큰이 없습니다. 먼저 토큰을 저장해 주세요.'})
                 argv = py('reels/scripts/collect.py', 'instagram') + (['--fit', fit] if fit else [])
-                return self.send(200, {'job': run_job('collect', [step('인스타그램 릴스 수집 (Apify)', argv, key='instagram')])['id']})
+                c = cfg()
+                pools = ([c['instagram']] if not fit else []) + [v.get('instagram') or {} for ch, v in c['channels'].items() if not fit or ch == fit]
+                n = sum(len((c['instagram'].get('hashtags') or {}).get(r) or []) + (1 if (c['instagram'].get('accounts') or {}).get(r) else 0) for r in ('GLOBAL', 'KR')) if not fit else 0
+                for ch in c['channels']:
+                    if fit and ch != fit:
+                        continue
+                    kw = kw_get(c, ch, 'instagram')
+                    ig = c['channels'][ch].get('instagram') or {}
+                    n += len(kw['kr']) + len(kw['global']) + sum(1 for r in ('GLOBAL', 'KR') if (ig.get('accounts') or {}).get(r))
+                if not n:
+                    return self.send(400, {'error': '수집할 인스타그램 해시태그나 계정이 없습니다. 키워드를 추가하고 저장해 주세요.'})
+                st = step(f'인스타그램 릴스 수집 · 해시태그·계정 {n}묶음', argv, key='ig_query', units=n, unit_re=r'^\[(KR|GLOBAL)\] ')
+                return self.send(200, {'job': run_job('collect', [st])['id']})
+            if path == '/api/collect' and body.get('platform') == 'tiktok':  # 틱톡 키워드 수집 (Apify)
+                if not ENV.get('APIFY_TOKEN'):
+                    return self.send(400, {'error': 'Apify 토큰이 없습니다. 「API 키 설정」에서 먼저 등록해 주세요.'})
+                c = cfg()
+                n = sum(len(kw_get(c, ch, 'tiktok')[k]) for ch in c['channels'] if not fit or ch == fit for k in ('kr', 'global'))
+                if not n:
+                    return self.send(400, {'error': '수집할 틱톡 키워드가 없습니다. 키워드를 추가하고 저장해 주세요.'})
+                argv = py('reels/scripts/collect.py', 'tiktok') + (['--fit', fit] if fit else [])
+                st = step(f'틱톡 영상 수집 · 키워드 {n}개', argv, key='tt_query', units=n, unit_re=r'^\[(KR|GLOBAL)\] ')
+                return self.send(200, {'job': run_job('collect', [st])['id']})
             if path == '/api/collect':  # 유튜브 레퍼런스 수집
                 argv = py('reels/scripts/collect.py', 'youtube', '--period', 'month' if body.get('period') == 'month' else 'week')
                 if fit:
