@@ -20,6 +20,43 @@ DB = os.path.join(REELS, 'data', 'refs.jsonl')
 ANA = os.path.join(REELS, 'data', 'analysis')
 WORK_OUT = os.path.join(ROOT, 'work', 'out')
 ENV = {**os.environ, 'PYTHONUTF8': '1', 'PYTHONIOENCODING': 'utf-8'}
+DOTENV = os.path.join(ROOT, '.env')   # 커밋 금지(.gitignore). APIFY_TOKEN 등 키 보관
+
+
+def load_dotenv():
+    if os.path.exists(DOTENV):
+        for line in open(DOTENV, encoding='utf-8'):
+            k, sep, v = line.strip().partition('=')
+            if sep and k and not k.startswith('#'):
+                ENV[k.strip()] = v.strip()
+
+
+def save_dotenv(key, value):
+    lines = [l.rstrip('\n') for l in open(DOTENV, encoding='utf-8')] if os.path.exists(DOTENV) else []
+    lines = [l for l in lines if not l.startswith(key + '=')]
+    if value:
+        lines.append(f'{key}={value}')
+        ENV[key] = value
+    else:
+        ENV.pop(key, None)
+    open(DOTENV, 'w', encoding='utf-8').write('\n'.join(lines) + ('\n' if lines else ''))
+
+
+def clean_list(v, strip):
+    """화면에서 온 계정·해시태그 목록 정리: 문자열(줄·쉼표 구분)이나 배열 → 중복 없는 이름 배열."""
+    if isinstance(v, str):
+        v = re.split(r'[\s,]+', v)
+    out = []
+    for x in v or []:
+        x = re.sub(r'^https?://(www\.)?instagram\.com/', '', str(x).strip()).strip('/').lstrip(strip).strip()
+        if x and re.fullmatch(r'[\w.\-가-힣]+', x) and x not in out:
+            out.append(x)
+    return out[:50]
+
+
+def ig_settings(c, fit):
+    ig = (c['channels'][fit].get('instagram') if fit else c['instagram']) or {}
+    return {k: {r: list((ig.get(k) or {}).get(r) or []) for r in ('GLOBAL', 'KR')} for k in ('accounts', 'hashtags')}
 STATUSES = ['포착', '검수대기', '촬영대기', '완료', '제외']
 STEP_FILE = {'analysis': 'analysis.md', 'scripts5': 'scripts5.md', 'plan': 'plan.md'}
 JOBS = {}
@@ -82,7 +119,7 @@ def load_refs():
 
 
 # ---------------- 백그라운드 작업 ----------------
-def run_job(kind, steps, ref=None):
+def run_job(kind, steps, ref=None, stop_on_error=True):
     """steps: [(설명, argv)] 를 순서대로 실행. 하나라도 실패하면 멈춘다."""
     jid = uuid.uuid4().hex[:10]
     job = JOBS[jid] = {'id': jid, 'kind': kind, 'ref': ref, 'status': 'running', 'log': '', 'started': time.time()}
@@ -95,7 +132,10 @@ def run_job(kind, steps, ref=None):
                                      stdin=subprocess.DEVNULL, text=True, encoding='utf-8', errors='replace')
                 for line in p.stdout:
                     job['log'] = (job['log'] + line)[-12000:]
-                if p.wait() != 0:
+                if p.wait() != 0 and not stop_on_error:
+                    job['log'] += '  (이 링크는 건너뜀)\n'
+                    continue
+                if p.returncode != 0:
                     job['status'] = 'error'
                     if 'authenticate' in job['log'] or 'OAuth' in job['log']:
                         job['log'] += '\n※ Claude Code 로그인이 만료됐습니다. 터미널(cmd)에서 claude 를 실행하고 /login 한 뒤 다시 눌러 주세요.\n'
@@ -183,7 +223,8 @@ class H(BaseHTTPRequestHandler):
             return self.send(200, {'refs': load_refs(), 'channels': list(c['channels']), 'statuses': STATUSES,
                                    'brands': {k: v.get('brand') for k, v in c['channels'].items()},
                                    'keywords': {k: {'kr': v.get('kr', []), 'global': v.get('global', [])} for k, v in c['channels'].items()},
-                                   'apify': bool(os.environ.get('APIFY_TOKEN')), 'claude': bool(shutil.which('claude'))})
+                                   'apify': bool(ENV.get('APIFY_TOKEN')), 'claude': bool(shutil.which('claude')),
+                                   'instagram': {'': ig_settings(c, None), **{ch: ig_settings(c, ch) for ch in c['channels']}}})
         if path == '/api/weekly':
             return self.send(200, weekly())
         m = re.fullmatch(r'/api/job/(\w+)', path)
@@ -239,6 +280,39 @@ class H(BaseHTTPRequestHandler):
                 label = {'analysis': '화면·대본 분석', 'scripts5': '대본 5개 작성', 'plan': '제작 기획 작성'}[step]
                 job = run_job(step, [(f'{label} (Claude Code · 몇 분 걸립니다)', claude_cmd(step_prompt(step, rid, fit)))], rid)
                 return self.send(200, {'job': job['id'], 'ref': rid})
+            if path == '/api/instagram':  # 인스타 수집 설정 저장 (토큰은 .env, 계정·해시태그는 config.json)
+                if 'token' in body:
+                    tok = str(body.get('token') or '').strip()
+                    if tok and not re.fullmatch(r'[\w\-~.]{10,200}', tok):
+                        return self.send(400, {'error': '토큰 형식이 올바르지 않습니다.'})
+                    save_dotenv('APIFY_TOKEN', tok)
+                if 'accounts' in body or 'hashtags' in body:
+                    p = os.path.join(REELS, 'config.json')
+                    c = json.load(open(p, encoding='utf-8'))
+                    tgt = c['channels'][fit] if fit else c
+                    ig = tgt.setdefault('instagram', {})
+                    for key, strip in (('accounts', '@'), ('hashtags', '#')):
+                        if key in body:
+                            ig[key] = {r: clean_list((body[key] or {}).get(r), strip) for r in ('GLOBAL', 'KR')}
+                    json.dump(c, open(p, 'w', encoding='utf-8'), ensure_ascii=False, indent=2)
+                return self.send(200, {'ok': True, 'apify': bool(ENV.get('APIFY_TOKEN')), 'settings': ig_settings(cfg(), fit)})
+            if path == '/api/bulk':  # 링크 여러 개를 보관함에 한 번에 추가 (토큰 불필요)
+                urls = []
+                for u in re.split(r'\s+', str(body.get('urls') or '')):
+                    u = resolve_short(u.strip())
+                    if u.startswith('http') and ref_id(u) and u not in urls:
+                        urls.append(u)
+                if not urls:
+                    return self.send(400, {'error': '인스타그램 /reel/ · /p/, 틱톡, 유튜브 영상 링크를 한 줄에 하나씩 넣어 주세요.'})
+                reg = 'KR' if body.get('region') == 'KR' else 'GLOBAL'
+                steps = [(f'보관함에 추가 {i}/{len(urls[:30])} · {u[:70]}', py('reels/scripts/collect.py', 'add', u, '--region', reg) + (['--fit', fit] if fit else []))
+                         for i, u in enumerate(urls[:30], 1)]
+                return self.send(200, {'job': run_job('bulk', steps, stop_on_error=False)['id'], 'count': len(steps)})
+            if path == '/api/collect' and body.get('platform') == 'instagram':  # 인스타 계정·해시태그 수집 (Apify)
+                if not ENV.get('APIFY_TOKEN'):
+                    return self.send(400, {'error': 'Apify 토큰이 없습니다. 먼저 토큰을 저장해 주세요.'})
+                argv = py('reels/scripts/collect.py', 'instagram') + (['--fit', fit] if fit else [])
+                return self.send(200, {'job': run_job('collect', [('인스타그램 릴스 수집 (Apify · 계정 수에 따라 몇 분)', argv)])['id']})
             if path == '/api/collect':  # 유튜브 레퍼런스 수집
                 argv = py('reels/scripts/collect.py', 'youtube', '--period', 'month' if body.get('period') == 'month' else 'week')
                 if fit:
@@ -266,6 +340,7 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--port', type=int, default=int(os.environ.get('PORT') or 5180))
     a = ap.parse_args()
+    load_dotenv()
     try:
         sys.stdout.reconfigure(encoding='utf-8')
     except Exception:

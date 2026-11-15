@@ -5,7 +5,7 @@
 저장: reels/data/refs.jsonl (한 줄 = 레퍼런스 1개)
 
   python3 reels/scripts/collect.py youtube [--fit 유이선생] [--region KR|GLOBAL] [--period week|month]
-  python3 reels/scripts/collect.py instagram            # APIFY_TOKEN 필요, config.json 의 accounts/hashtags
+  python3 reels/scripts/collect.py instagram [--fit 채널] # APIFY_TOKEN 필요, 채널별 instagram.accounts/hashtags
   python3 reels/scripts/collect.py add <url> [--fit 채널] # 우연히 본 링크 1개 직접 추가 (유튜브·틱톡·인스타)
   python3 reels/scripts/collect.py score                 # 배수·참여율 다시 계산해 상태 갱신
   python3 reels/scripts/collect.py list [--status 검수대기] [--fit 채널] [--region KR]
@@ -192,21 +192,36 @@ def ig_item(it, reg, source):
     }
 
 
+def ig_sources(fit=None):
+    """수집 대상 묶음 [(채널 또는 None, 지역, 계정 목록, 해시태그 목록)].
+    채널별 목록은 config.json channels[채널].instagram = {"accounts": {"GLOBAL": [], "KR": []}, "hashtags": {...}},
+    채널을 정하지 않은 공용 목록은 config.json instagram.accounts / hashtags."""
+    out = []
+    pools = [(None, CFG['instagram'])] if not fit else []
+    pools += [(ch, c.get('instagram') or {}) for ch, c in CFG['channels'].items() if not fit or ch == fit]
+    for ch, ig in pools:
+        for reg in ('GLOBAL', 'KR'):
+            accs = [x.lstrip('@').strip() for x in ((ig.get('accounts') or {}).get(reg) or []) if x.strip()]
+            tags = [x.lstrip('#').strip() for x in ((ig.get('hashtags') or {}).get(reg) or []) if x.strip()]
+            if accs or tags: out.append((ch, reg, accs, tags))
+    return out
+
+
 def cmd_instagram(a):
     refs, ig = load(), CFG['instagram']
+    srcs = ig_sources(a.fit)
+    if not srcs: sys.exit('수집할 인스타그램 계정·해시태그가 없습니다. 대시보드 「인스타그램」 탭에서 계정이나 해시태그를 먼저 저장하세요.')
     got = []
-    for reg in ('GLOBAL', 'KR'):
-        accs = ig['accounts'].get(reg) or []
+    for ch, reg, accs, tags in srcs:
         if accs:
-            print(f'[{reg}] 계정 {len(accs)}개')
+            print(f'[{reg}] {ch or "공용"} · 계정 {len(accs)}개: {", ".join(accs)}', flush=True)
             items = apify(ig['actor_reels'], {'username': accs, 'resultsLimit': ig['results_per_account']})
-            got += [x for x in (ig_item(it, reg, '계정') for it in items) if x]
-        tags = ig['hashtags'].get(reg) or []
+            got += [dict(x, fit=ch) for x in (ig_item(it, reg, '계정') for it in items) if x]
         if tags:
-            print(f'[{reg}] 해시태그 {len(tags)}개')
+            print(f'[{reg}] {ch or "공용"} · 해시태그 {len(tags)}개: {", ".join(tags)}', flush=True)
             items = apify(ig['actor_hashtag'], {'hashtags': tags, 'resultsType': 'reels', 'resultsLimit': ig['results_per_account']})
-            got += [x for x in (ig_item(it, reg, '해시태그') for it in items) if x]
-    if not got: sys.exit('config.json 의 instagram.accounts / hashtags 가 비어 있습니다.')
+            got += [dict(x, fit=ch) for x in (ig_item(it, reg, '해시태그') for it in items) if x]
+    if not got: sys.exit('가져온 릴스가 없습니다. 계정 이름·해시태그 철자와 Apify 실행 한도를 확인하세요.')
     by = {}
     for r in got:
         if r.get('views'): by.setdefault(r['author'], []).append(r['views'])
@@ -214,6 +229,8 @@ def cmd_instagram(a):
         vs = by.get(r['author'], [])
         if len(vs) >= 5: r['author_median_views'] = int(statistics.median(vs))
         upsert(refs, r)
+    print(f'릴스 {len(got)}건 반영', flush=True)
+    for k, v in load().items(): refs.setdefault(k, v)   # 수집 도중 다른 창에서 추가된 링크 보존
     save(refs); summary(refs)
 
 
@@ -249,6 +266,10 @@ def cmd_add(a):
                 print(f'! 수치 조회 실패({e.__class__.__name__}) — 링크만 저장', file=sys.stderr)
         elif m:
             r = {'id': f'ig_{m.group(1)}', 'platform': 'instagram', 'url': u}
+            try:
+                r.update(generic_detail(u))   # 공개 릴스면 조회·좋아요를 얻는다 (로그인 벽이면 링크만 저장)
+            except Exception as e:
+                print(f'! 수치 조회 실패({e.__class__.__name__}) — 링크만 저장', file=sys.stderr)
         else:
             sys.exit('유튜브 · 틱톡(/video/) · 인스타 /reel/ · /p/ 링크만 지원합니다.')
     r.update(region=a.region or 'GLOBAL', source='직접 추가')
@@ -308,7 +329,7 @@ def cmd_selftest(a):
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(); sp = ap.add_subparsers(dest='cmd', required=True)
     p = sp.add_parser('youtube'); p.add_argument('--fit'); p.add_argument('--region', choices=['KR', 'GLOBAL']); p.add_argument('--period', default='week', choices=['week', 'month'])
-    sp.add_parser('instagram')
+    p = sp.add_parser('instagram'); p.add_argument('--fit')
     p = sp.add_parser('add'); p.add_argument('url'); p.add_argument('--fit'); p.add_argument('--region', choices=['KR', 'GLOBAL'])
     sp.add_parser('score'); sp.add_parser('selftest')
     p = sp.add_parser('list'); p.add_argument('--status'); p.add_argument('--fit'); p.add_argument('--region'); p.add_argument('-n', type=int, default=40)

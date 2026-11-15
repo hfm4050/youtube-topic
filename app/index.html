@@ -33,7 +33,7 @@ h1{font-size:24px;margin:0 0 2px;letter-spacing:-.02em}
 h3{font-size:18px;margin:0 0 2px}
 label.l{display:block;font-size:12.5px;font-weight:700;margin:16px 0 6px}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-input[type=text],input[type=url],select{border:1px solid var(--line);border-radius:10px;padding:11px 13px;background:var(--card);min-width:0}
+input[type=text],input[type=url],input[type=password],select{border:1px solid var(--line);border-radius:10px;padding:11px 13px;background:var(--card);min-width:0}
 input:focus,select:focus,button:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
 .grow{flex:1 1 280px}
 .btn{border:0;border-radius:10px;padding:11px 20px;font-weight:700;background:var(--ac);color:#fff;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-block}
@@ -138,8 +138,15 @@ table.w th{font-size:12px;color:var(--sub);white-space:nowrap;position:sticky;to
 .pill.s{background:#FDEBD9;color:var(--warn)}
 .kw{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .kw span{font-size:12px;background:#EEF1F5;border-radius:999px;padding:3px 10px;color:#4A5362}
+.igrid{display:grid;grid-template-columns:1.25fr 1fr;gap:26px}
+.igh{font-weight:700;font-size:15px;margin-bottom:4px}
+.ig2{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;margin-top:10px}
+.ig2 label{font-size:12.5px;font-weight:700}
+textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font:13.5px/1.5 inherit;font-family:inherit;resize:vertical;display:block;margin-top:4px;background:var(--card);color:var(--ink)}
+textarea:focus{outline:2px solid var(--ac);outline-offset:1px}
+.pill.ok{background:#DDF3E7;color:#1E7A4F}
 [hidden]{display:none!important}
-@media(max-width:820px){.filters{grid-template-columns:1fr 1fr}.steps .lb{display:none}.refhead{grid-template-columns:1fr}.refhead .th{max-width:140px}.tl{grid-template-columns:1fr}.tl .hd.ko{display:none}.tl .cell.ko{padding-top:0}.hooktext{font-size:18px}}
+@media(max-width:820px){.filters{grid-template-columns:1fr 1fr}.igrid{grid-template-columns:1fr}.steps .lb{display:none}.refhead{grid-template-columns:1fr}.refhead .th{max-width:140px}.tl{grid-template-columns:1fr}.tl .hd.ko{display:none}.tl .cell.ko{padding-top:0}.hooktext{font-size:18px}}
 </style>
 </head>
 <body>
@@ -198,6 +205,42 @@ table.w th{font-size:12px;color:var(--sub);white-space:nowrap;position:sticky;to
         <div class="kw" id="kw"></div>
         <div id="job-collect"></div>
       </div>
+
+      <div class="card" id="igpanel" hidden style="margin:16px 0 0">
+        <div class="secthead">
+          <div><h2 id="ig-title">인스타그램 가져오기</h2><div class="sub" id="ig-sub"></div></div>
+          <span class="pill" id="ig-tok"></span>
+        </div>
+        <div class="igrid">
+          <div id="ig-auto">
+            <div class="igh">① 계정·해시태그로 자동 수집</div>
+            <div class="sub">직접 본 계정만 넣습니다. 한 줄에 하나, @ 없이 써도 됩니다. 계정마다 최근 릴스를 가져와 평소 대비 배수로 판정합니다.</div>
+            <div class="ig2">
+              <label>해외 계정<textarea id="ig-acc-g" rows="4" placeholder="mavgpt&#10;chase.h.ai"></textarea></label>
+              <label>국내 계정<textarea id="ig-acc-k" rows="4" placeholder="계정 아이디"></textarea></label>
+              <label>해외 해시태그<textarea id="ig-tag-g" rows="2" placeholder="healthcaremarketing"></textarea></label>
+              <label>국내 해시태그<textarea id="ig-tag-k" rows="2" placeholder="병원마케팅"></textarea></label>
+            </div>
+            <label class="l" for="ig-token">Apify 토큰 <span class="sub" style="font-weight:500">— apify.com → Settings → API tokens. 이 PC의 .env 에만 저장됩니다.</span></label>
+            <div class="row">
+              <input class="grow" id="ig-token" type="password" autocomplete="off" placeholder="apify_api_…">
+              <button class="btn ghost" id="ig-save">설정 저장</button>
+              <button class="btn" id="ig-run">인스타그램 수집 실행</button>
+            </div>
+          </div>
+          <div>
+            <div class="igh" id="bulk-h">② 릴스 링크 붙여넣기 (토큰 없이 가능)</div>
+            <div class="sub">앱에서 「링크 복사」한 주소를 한 줄에 하나씩 넣습니다. 한 번에 30개까지 보관함에 추가합니다.</div>
+            <textarea id="bulk" rows="7" placeholder="https://www.instagram.com/reel/…&#10;https://www.instagram.com/reel/…" style="margin-top:10px"></textarea>
+            <div class="row" style="margin-top:10px">
+              <select id="bulk-region"><option value="GLOBAL">해외 레퍼런스</option><option value="KR">국내 레퍼런스</option></select>
+              <button class="btn" id="bulk-run">링크 일괄 추가</button>
+            </div>
+          </div>
+        </div>
+        <div id="job-ig"></div>
+      </div>
+
       <div class="grid" id="grid"></div>
     </div>
 
@@ -287,7 +330,7 @@ function roleTag(role) {
 // ---------- 보관함 ----------
 async function loadRefs() {
   const d = await api('/api/refs');
-  Object.assign(S, {refs:d.refs, channels:d.channels, brands:d.brands||{}, keywords:d.keywords||{}, statuses:d.statuses});
+  Object.assign(S, {refs:d.refs, channels:d.channels, brands:d.brands||{}, keywords:d.keywords||{}, statuses:d.statuses, ig:d.instagram||{}, apify:!!d.apify});
   if (!$('#client').options.length) {
     const opt = c => `<option value="${esc(c)}">${esc(S.brands[c] || c)}</option>`;
     $('#client').innerHTML = '<option value="">전체 고객 채널</option>' + S.channels.map(opt).join('');
@@ -316,6 +359,8 @@ function renderGrid() {
   const rows = base.filter(r => !S.status || r.status === S.status);
   $('#count').textContent = `${mine.length.toLocaleString()}개 수집분`;
   $('#collect').textContent = cl ? `${S.brands[cl] || cl} 유튜브 새로 수집` : '유튜브 새로 수집';
+  $('#collect').hidden = S.plat === 'instagram' || S.plat === 'tiktok';
+  renderIg();
   const kw = cl && S.keywords[cl] ? [...S.keywords[cl].kr, ...S.keywords[cl].global] : [];
   $('#kw').innerHTML = kw.length ? '<span style="background:none;padding-left:0;color:var(--sub)">수집 키워드</span>' + kw.map(k => `<span>${esc(k)}</span>`).join('') : '';
   const pname = {instagram:'인스타그램', tiktok:'틱톡', youtube:'유튜브'}[S.plat];
@@ -338,6 +383,50 @@ function renderGrid() {
   $$('#grid .go').forEach(b => b.onclick = () => openRef(b.dataset.id));
 }
 ['q','f-region','f-source','f-form'].forEach(id => $('#'+id).addEventListener('input', renderGrid));
+
+// ---------- 인스타그램·틱톡 가져오기 패널 ----------
+let igKey = null;
+function renderIg() {
+  const ig = S.plat === 'instagram', tt = S.plat === 'tiktok', cl = S.client;
+  $('#igpanel').hidden = !(ig || tt);
+  if (!(ig || tt)) return;
+  const who = cl ? (S.brands[cl] || cl) : '공용(채널 미정)';
+  $('#ig-title').textContent = ig ? '인스타그램 가져오기' : '틱톡 가져오기';
+  $('#ig-sub').textContent = ig ? `${who} 채널에 쌓입니다. 고객 채널을 바꾸면 그 채널의 계정·해시태그 목록이 따로 저장됩니다.` : `${who} 채널에 쌓입니다. 틱톡은 영상 링크로 추가합니다.`;
+  $('#ig-auto').hidden = !ig; $('#ig-tok').hidden = !ig;
+  $('#ig-tok').textContent = S.apify ? 'Apify 토큰 저장됨' : 'Apify 토큰 없음'; $('#ig-tok').className = 'pill' + (S.apify ? ' ok' : '');
+  $('#ig-token').placeholder = S.apify ? '저장됨 — 바꿀 때만 입력' : 'apify_api_…';
+  $('#bulk-h').textContent = ig ? '② 릴스 링크 붙여넣기 (토큰 없이 가능)' : '틱톡 영상 링크 붙여넣기';
+  $('#bulk').placeholder = ig ? 'https://www.instagram.com/reel/…\nhttps://www.instagram.com/reel/…' : 'https://www.tiktok.com/@계정/video/…\nhttps://vm.tiktok.com/…';
+  const key = cl + '|' + S.plat;
+  if (key !== igKey) {                 // 채널·탭이 바뀔 때만 입력란을 다시 채운다 (입력 중 덮어쓰기 방지)
+    igKey = key;
+    const c = S.ig[cl] || {accounts:{}, hashtags:{}}, j = a => (a || []).join('\n');
+    $('#ig-acc-g').value = j(c.accounts.GLOBAL); $('#ig-acc-k').value = j(c.accounts.KR);
+    $('#ig-tag-g').value = j(c.hashtags.GLOBAL); $('#ig-tag-k').value = j(c.hashtags.KR);
+  }
+}
+async function saveIg() {
+  const body = {fit: S.client, accounts: {GLOBAL: $('#ig-acc-g').value, KR: $('#ig-acc-k').value}, hashtags: {GLOBAL: $('#ig-tag-g').value, KR: $('#ig-tag-k').value}};
+  if ($('#ig-token').value.trim()) body.token = $('#ig-token').value.trim();
+  const r = await api('/api/instagram', body);
+  if (r.error) { $('#job-ig').innerHTML = `<div class="note">${esc(r.error)}</div>`; return false; }
+  $('#ig-token').value = ''; S.apify = r.apify; S.ig[S.client] = r.settings; igKey = null; renderIg();
+  $('#job-ig').innerHTML = `<div class="note" style="background:#E9F7EF;border-color:#BFE3CD;color:#1E5E3F">저장했습니다 · 계정 ${r.settings.accounts.GLOBAL.length + r.settings.accounts.KR.length}개 · 해시태그 ${r.settings.hashtags.GLOBAL.length + r.settings.hashtags.KR.length}개</div>`;
+  return true;
+}
+$('#ig-save').onclick = saveIg;
+$('#ig-run').onclick = async () => {
+  if (!await saveIg()) return;
+  const j = await api('/api/collect', {platform: 'instagram', fit: S.client});
+  if (j.error) return $('#job-ig').innerHTML = `<div class="note">${esc(j.error)}</div>`;
+  watch(j.job, $('#job-ig'), '인스타그램 릴스 수집 중', loadRefs);
+};
+$('#bulk-run').onclick = async () => {
+  const j = await api('/api/bulk', {urls: $('#bulk').value, fit: S.client, region: $('#bulk-region').value});
+  if (j.error) return $('#job-ig').innerHTML = `<div class="note">${esc(j.error)}</div>`;
+  watch(j.job, $('#job-ig'), `링크 ${j.count}개 추가 중`, ok => { if (ok) $('#bulk').value = ''; S.status = ''; loadRefs(); });
+};
 $('#client').onchange = () => { S.client = $('#client').value; store.set('client', S.client); renderGrid(); if (!$('#weekly').hidden) renderWeekly(); };
 
 // ---------- 작업 로그 ----------
