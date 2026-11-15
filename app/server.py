@@ -465,7 +465,36 @@ RE_ENGAGE = re.compile(r'(?:좋아요|추천수?|댓글수?|likes?|comments?)\D{
 _first = lambda m: next((g for g in m.groups() if g), '').strip()
 
 
-def evidence_view(text):
+# 근거 매체 분류 — 유튜브를 가장 앞에 둔다(우선순위 순서 그대로)
+MEDIA = [
+    ('youtube', '유튜브', r'유튜브|youtube|youtu\.be|쇼츠|shorts|구독자'),
+    ('instagram', '인스타그램', r'인스타|instagram|릴스|\breels?\b'),
+    ('tiktok', '틱톡', r'틱톡|tiktok'),
+    ('trends', '구글트렌드', r'구글\s*트렌드|google\s*trends|trends\.google|데이터랩|검색량|검색어\s*추이|검색 트렌드'),
+    ('community', '커뮤니티', r'커뮤니티|카페|디시|클리앙|뽐뿌|블라인드|레딧|reddit|quora|지식인|네이트판|보배드림|인스티즈|닥터나우|하이닥|굿닥|질문이? 반복'),
+    ('news', '뉴스', r'뉴스|보도|기사|일보|신문|경제|데일리|닷컴|타임스|방송|매체|리포트|학회|발표|조사'),
+]
+MEDIA_RANK = {k: i for i, (k, _, _) in enumerate(MEDIA)}
+RE_FOREIGN = re.compile(r'레딧|reddit|quora|해외|글로벌', re.I)
+
+
+def media_view(text, given=None):
+    """근거에서 매체를 뽑는다. 리서치가 '매체' 값을 직접 적었으면 그것을 먼저 쓴다."""
+    found = []
+    for key, label, pat in MEDIA:
+        if re.search(pat, text, re.I):
+            if key == 'community' and RE_FOREIGN.search(text):
+                label = '해외 커뮤니티'
+            found.append({'key': key, 'label': label})
+    if given:
+        g = str(given).strip()
+        hit = next((m for m in MEDIA if re.search(m[2], g, re.I)), None)
+        if hit:
+            found = [{'key': hit[0], 'label': hit[1]}] + [f for f in found if f['key'] != hit[0]]
+    return found
+
+
+def evidence_view(text, given_media=None):
     """근거 문장에서 조회·참여 수치와 출처를 뽑는다.
     verified = 조회수 수치와 좋아요/댓글 수치가 모두 있는 것(=실제로 터진 영상이 확인된 근거)."""
     text = (text or '').strip()
@@ -487,12 +516,15 @@ def evidence_view(text):
         add(q, 'https://www.google.com/search?q=' + urllib.parse.quote(q))
     if not srcs and text:
         add('출처 검색', 'https://www.google.com/search?q=' + urllib.parse.quote(' '.join(text.split()[:8])))
-    return {'text': text, 'sources': srcs, 'views': views, 'engage': engage,
+    media = media_view(text, given_media)
+    return {'text': text, 'sources': srcs, 'views': views, 'engage': engage, 'media': media,
+            'rank': MEDIA_RANK.get(media[0]['key'], 99) if media else 99,
             'verified': bool(views and engage)}
 
 
 def weekly():
-    out = {'channels': {}, 'csv': None, 'hooks': read(os.path.join(WORK_OUT, 'prev_hooks.md'))}
+    out = {'channels': {}, 'csv': None, 'hooks': read(os.path.join(WORK_OUT, 'prev_hooks.md')),
+           'media': [{'key': k, 'label': l} for k, l, _ in MEDIA]}
     for g in ('beauty', 'medical', 'life'):
         p = os.path.join(WORK_OUT, f'cand_{g}.json')
         if os.path.exists(p):
@@ -500,7 +532,7 @@ def weekly():
                 d = json.load(open(p, encoding='utf-8'))
                 for items in d.values():
                     for it in items:
-                        it['_ev'] = evidence_view(it.get('벤치마크 근거'))
+                        it['_ev'] = evidence_view(it.get('벤치마크 근거'), it.get('매체'))
                 out['channels'].update(d)
             except ValueError:
                 pass

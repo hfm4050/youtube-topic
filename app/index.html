@@ -144,6 +144,10 @@ table.w th{font-size:12px;color:var(--sub);white-space:nowrap;position:sticky;to
 .pill.s{background:#FDEBD9;color:var(--warn)}
 .evb{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:6px;margin-bottom:5px;white-space:nowrap}
 .evb.ok{background:#DDF3E7;color:#1E7A4F}.evb.no{background:#FBE3E0;color:#B3261E}
+.mchip{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:6px;margin:0 4px 5px 0;background:#E7EEFB;color:#2B4B8F}
+.mchip.youtube{background:#FBE5E5;color:#A32020}.mchip.instagram{background:#F7E6F2;color:#8E2A6B}
+.mchip.tiktok{background:#E6E9EE;color:#1F2430}.mchip.trends{background:#E6F1E9;color:#1E6B45}
+.mchip.news{background:#EEF1F5;color:#4A5362}
 .evs{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
 .evs a{font-size:11.5px;background:#EEF1F5;color:#3B4654;border-radius:999px;padding:2px 9px;text-decoration:none;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .evs a:hover{background:var(--ac-soft);color:var(--ac)}
@@ -364,6 +368,7 @@ dialog::backdrop{background:#10141c88}
         <div class="row" id="w-tools" hidden>
           <select id="w-view"><option value="csv">확정 주제</option><option value="cand">리서치 후보 전체</option></select>
           <select id="w-ev"><option value="ok">수치 확인된 근거만</option><option value="">전체 보기</option></select>
+          <select id="w-media"><option value="">모든 매체 · 유튜브 먼저</option></select>
           <button class="btn ghost sm" id="w-reload">다시 불러오기</button>
         </div>
       </div>
@@ -851,40 +856,54 @@ $('#w-run').onclick = loadWeekly; $('#w-reload').onclick = loadWeekly;
 // 근거 칸: 수치 확인 배지 + 본문(링크 처리) + 출처 링크
 function evCell(ev) {
   if (!ev) return '';
+  const media = (ev.media || []).map(m => `<span class="mchip ${m.key}">${esc(m.label)}</span>`).join('');
   const badge = ev.verified
     ? `<span class="evb ok">수치 확인${ev.views[0] ? ' · 조회 ' + esc(ev.views[0]) : ''}${ev.engage[0] ? ' · 참여 ' + esc(ev.engage[0]) : ''}</span>`
     : `<span class="evb no">수치 없음${ev.views.length ? ' · 조회수만' : ''}</span>`;
   const body = esc(ev.text).replace(/https?:\/\/[^\s)\]&]+/g, u => `<a class="in" href="${u}" target="_blank" rel="noopener">${u}</a>`);
   const srcs = (ev.sources || []).map(s => `<a href="${esc(s.url)}" target="_blank" rel="noopener" title="${esc(s.url)}">${esc(s.label)}</a>`).join('');
-  return `<div class="ev">${badge}<p>${body}</p>${srcs ? `<div class="evs">${srcs}</div>` : ''}</div>`;
+  return `<div class="ev">${media}${badge}<p>${body}</p>${srcs ? `<div class="evs">${srcs}</div>` : ''}</div>`;
 }
 function renderWeekly() {
   if (!W) return;
   const cl = S.client, T = $('#w-table'), E = $('#w-empty'), view = $('#w-view').value, onlyOk = $('#w-ev').value === 'ok';
+  const mf = $('#w-media').value;
+  if (!$('#w-media').dataset.filled && W.media) { $('#w-media').dataset.filled = '1';
+    $('#w-media').innerHTML = '<option value="">모든 매체 · 유튜브 먼저</option>' + W.media.map(m => `<option value="${m.key}">${esc(m.label)}만</option>`).join(''); }
+  const hasMedia = ev => !mf || (ev && (ev.media || []).some(m => m.key === mf));
+  const byMedia = (a, b) => (a.ev ? a.ev.rank : 99) - (b.ev ? b.ev.rank : 99);   // 유튜브 근거를 맨 앞으로
   const chs = Object.keys(W.channels);
   $('#w-sub').textContent = (cl ? `${S.brands[cl] || cl} · ` : '전체 고객 채널 · ') + (chs.length ? `리서치 후보 ${chs.reduce((n,c) => n + W.channels[c].length, 0)}개` : '리서치 후보 없음') + (W.csv ? ` · 확정 파일 ${W.csv.name}` : ' · 아직 확정 전');
   let html = '', total = 0, shown = 0;
   if (view === 'csv' && W.csv) {
     const iv = W.csv.ev_col;
     const all = W.csv.rows.map((r, i) => ({r, ev: (W.csv.ev || [])[i]})).filter(x => !cl || x.r[0] === cl);
-    total = all.length; const rows = all.filter(x => !onlyOk || (x.ev && x.ev.verified)); shown = rows.length;
+    total = all.length;
+    const rows = all.filter(x => (!onlyOk || (x.ev && x.ev.verified)) && hasMedia(x.ev));
+    rows.sort(byMedia); shown = rows.length;
     if (rows.length) html = '<tr>' + W.csv.header.slice(0, 9).map(x => `<th>${esc(x)}</th>`).join('') + '</tr>' + rows.map(({r, ev}) => '<tr>' + r.slice(0, 9).map((c, i) =>
       i === iv ? `<td class="evcell">${evCell(ev)}</td>` : `<td>${i === 5 ? `<span class="pill ${c === '숏폼' ? 's' : ''}">${esc(c)}</span>` : i === 2 ? `<b>${esc(c)}</b>` : esc(c)}</td>`).join('') + '</tr>').join('');
   } else {
     const list = (cl ? [cl] : chs).filter(c => W.channels[c]);
     const items = list.flatMap(ch => W.channels[ch].map(c => ({ch, c})));
-    total = items.length; const rows = items.filter(({c}) => !onlyOk || (c._ev && c._ev.verified)); shown = rows.length;
+    total = items.length;
+    const rows = items.filter(({c}) => (!onlyOk || (c._ev && c._ev.verified)) && hasMedia(c._ev));
+    rows.sort((a, b) => byMedia({ev: a.c._ev}, {ev: b.c._ev})); shown = rows.length;
     if (rows.length) html = '<tr><th>채널</th><th>No</th><th>주제(가제)</th><th>형식</th><th>카테고리</th><th>키워드</th><th>벤치마크 근거 · 출처</th><th>핵심 스토리라인</th></tr>' +
       rows.map(({ch, c}) => `<tr><td style="white-space:nowrap">${esc(ch)}</td><td>${c.No}</td><td><b>${esc(c['주제'])}</b></td><td><span class="pill ${c['형식'] === '숏폼' ? 's' : ''}">${esc(c['형식'])}</span><br><span class="sub">${esc(c['권장 길이'])}</span></td><td>${esc(c['카테고리'])}</td><td>${esc(c['키워드'])}</td><td class="evcell">${evCell(c._ev)}</td><td>${esc(c['핵심 스토리라인'])}</td></tr>`).join('');
   }
   T.innerHTML = html; E.hidden = !!html;
   const N = $('#w-note');
-  N.hidden = !(onlyOk && total);
-  N.innerHTML = `벤치마크 근거에 <b>조회수와 좋아요·댓글 수치가 모두 들어 있는 ${shown}개</b>만 보고 있습니다 (전체 ${total}개). 나머지 ${total - shown}개는 수치가 확인되지 않아 근거로 쓰지 않습니다 — 그 주제를 쓰려면 실제 영상의 조회·참여 수치와 출처를 채워 다시 리서치하세요.`;
-  if (onlyOk && total && !shown) { E.hidden = false; return E.textContent = `수치가 확인된 근거가 없습니다. 위 「전체 보기」로 바꾸면 ${total}개 전부 볼 수 있습니다.`; }
+  const mlabel = mf ? (W.media.find(m => m.key === mf) || {}).label : '';
+  N.hidden = !((onlyOk || mf) && total);
+  N.innerHTML = `<b>${shown}개</b> 보는 중 (전체 ${total}개)`
+    + (onlyOk ? ' · 조회수와 좋아요·댓글 수치가 모두 확인된 근거만' : '')
+    + (mf ? ` · ${esc(mlabel)} 근거만` : ' · 매체 우선순위 순(유튜브 → 인스타그램 → 틱톡 → 구글트렌드 → 커뮤니티 → 뉴스)')
+    + (onlyOk ? `. 제외된 ${total - shown}개는 실제 영상의 조회·참여 수치와 출처를 채워 다시 리서치해야 근거로 쓸 수 있습니다.` : '.');
+  if ((onlyOk || mf) && total && !shown) { E.hidden = false; return E.textContent = `조건에 맞는 근거가 없습니다. 위 선택을 「전체 보기」·「모든 매체」로 바꾸면 ${total}개 전부 볼 수 있습니다.`; }
   E.textContent = cl ? `${S.brands[cl] || cl} 채널은 화요일 63개 주제 리포트 대상(7개 채널)이 아니어서 주간 후보가 없습니다. 「레퍼런스 스튜디오」에서 이 채널의 레퍼런스를 수집·분석해 주제를 잡으세요.` : '이번 회차 리서치 결과가 아직 없습니다 (work/out/cand_*.json).';
 }
-$('#w-view').onchange = renderWeekly; $('#w-ev').onchange = renderWeekly;
+$('#w-view').onchange = renderWeekly; $('#w-ev').onchange = renderWeekly; $('#w-media').onchange = renderWeekly;
 function mode(m) {
   $('#studio').hidden = m !== 'studio'; $('#weekly').hidden = m !== 'weekly';
   $('#mode-studio').setAttribute('aria-pressed', m === 'studio'); $('#mode-weekly').setAttribute('aria-pressed', m === 'weekly');
