@@ -398,7 +398,7 @@ def cmd_selftest(a):
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(); sp = ap.add_subparsers(dest='cmd', required=True)
-    p = sp.add_parser('youtube'); p.add_argument('--fit'); p.add_argument('--region', choices=['KR', 'GLOBAL']); p.add_argument('--period', default='week', choices=['week', 'month'])
+    p = sp.add_parser('youtube'); p.add_argument('--fit'); p.add_argument('--region', choices=['KR', 'GLOBAL']); p.add_argument('--period', default='week', choices=['day', 'week', 'month', 'year'])
     p = sp.add_parser('instagram'); p.add_argument('--fit')
     p = sp.add_parser('tiktok'); p.add_argument('--fit')
     p = sp.add_parser('add'); p.add_argument('url'); p.add_argument('--fit'); p.add_argument('--region', choices=['KR', 'GLOBAL'])

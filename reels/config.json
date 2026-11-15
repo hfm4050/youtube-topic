@@ -18,8 +18,10 @@
   },
   "youtube": {
     "period_sp": {
+      "day": "CAMSBAgCEAE%3D",
       "week": "CAMSBAgDEAE%3D",
-      "month": "CAMSBAgEEAE%3D"
+      "month": "CAMSBAgEEAE%3D",
+      "year": "CAMSBAgFEAE%3D"
     },
     "per_query": 12,
     "detail_top": 5,

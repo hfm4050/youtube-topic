@@ -666,7 +666,7 @@ class H(BaseHTTPRequestHandler):
                 st = step(f'틱톡 영상 수집 · 키워드 {n}개', argv, key='tt_query', units=n, unit_re=r'^\[(KR|GLOBAL)\] ')
                 return self.send(200, {'job': run_job('collect', [st])['id']})
             if path == '/api/collect':  # 유튜브 레퍼런스 수집
-                argv = py('reels/scripts/collect.py', 'youtube', '--period', 'month' if body.get('period') == 'month' else 'week')
+                argv = py('reels/scripts/collect.py', 'youtube', '--period', body.get('period') if body.get('period') in ('day', 'week', 'month', 'year') else 'week')
                 if fit:
                     argv += ['--fit', fit]
                 if body.get('region') in ('KR', 'GLOBAL'):

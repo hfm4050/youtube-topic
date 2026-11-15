@@ -33,7 +33,7 @@ h1{font-size:24px;margin:0 0 2px;letter-spacing:-.02em}
 h3{font-size:18px;margin:0 0 2px}
 label.l{display:block;font-size:12.5px;font-weight:700;margin:16px 0 6px}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-input[type=text],input[type=url],input[type=password],select{border:1px solid var(--line);border-radius:10px;padding:11px 13px;background:var(--card);min-width:0}
+input[type=text],input[type=url],input[type=password],input[type=date],select{border:1px solid var(--line);border-radius:10px;padding:11px 13px;background:var(--card);min-width:0}
 input:focus,select:focus,button:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
 .grow{flex:1 1 280px}
 .btn{border:0;border-radius:10px;padding:11px 20px;font-weight:700;background:var(--ac);color:#fff;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-block}
@@ -41,7 +41,7 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--ac);outlin
 .btn.sm{padding:7px 12px;font-size:13px}
 .btn:disabled{opacity:.5;cursor:default}
 .hint{font-size:12.5px;color:var(--sub);margin-top:8px}
-.filters{display:grid;grid-template-columns:minmax(0,1fr) 150px 160px 130px 170px;gap:14px;align-items:end}
+.filters{display:grid;grid-template-columns:minmax(0,1fr) 140px 150px 120px 140px 160px;gap:14px;align-items:end}
 .filters label.l{margin-top:0}
 .filters input,.filters select{width:100%}
 .secthead{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px;gap:12px;flex-wrap:wrap}
@@ -257,6 +257,8 @@ dialog::backdrop{background:#10141c88}
           <div><label class="l" for="f-region">국가</label><select id="f-region"><option value="">국내·해외 전체</option><option value="KR">국내</option><option value="GLOBAL">해외</option></select></div>
           <div><label class="l" for="f-source">수집 경로</label><select id="f-source"><option value="">모든 수집 경로</option><option value="키워드">키워드 검색</option><option value="계정">지정 계정</option><option value="해시태그">해시태그</option><option value="직접 추가">링크 직접 추가</option></select></div>
           <div><label class="l" for="f-form">형식</label><select id="f-form"><option value="">숏폼·롱폼</option><option value="short">숏폼만</option><option value="long">롱폼만</option></select></div>
+          <div><label class="l" for="f-period">게시 기간</label><select id="f-period"><option value="">전체 기간</option><option value="1">최근 1일</option><option value="3">최근 3일</option><option value="7">최근 1주일</option><option value="30">최근 1개월</option><option value="90">최근 3개월</option><option value="365">최근 1년</option><option value="custom">직접 설정…</option></select></div>
+          <div id="f-range" class="row" hidden style="grid-column:1/-1;gap:8px"><label class="l" style="margin:0">구간</label><input type="date" id="f-from"><span class="sub">~</span><input type="date" id="f-to"><span class="sub" id="f-range-n"></span></div>
           <div><label class="l" for="f-hot">급등</label><select id="f-hot"><option value="">전체</option><option value="any">조회·댓글 급등만</option><option value="v">조회 급등 (5배↑)</option><option value="c">댓글 급등 (3배↑)</option></select></div>
         </div>
         <div class="tabs" id="status-tabs"></div>
@@ -448,9 +450,15 @@ async function loadRefs() {
 }
 function renderGrid() {
   const q = $('#q').value.trim().toLowerCase(), rg = $('#f-region').value, src = $('#f-source').value, form = $('#f-form').value, hot = $('#f-hot').value, cl = S.client;
+  const per = $('#f-period').value, today = new Date(); today.setHours(0,0,0,0);
+  let from = null, to = null;
+  if (per === 'custom') { from = $('#f-from').value || null; to = $('#f-to').value || null; }
+  else if (per) { const d = new Date(today); d.setDate(d.getDate() - (+per - 1)); from = d.toISOString().slice(0, 10); }
+  $('#f-range').hidden = per !== 'custom';
+  const inPeriod = r => { if (!from && !to) return true; const u = r.uploaded; if (!u) return false; return (!from || u >= from) && (!to || u <= to); };
   const isHot = r => { const v = r.views_ok && (r.outlier >= HOT_VIEWS || r.views_x >= HOT_VIEWS), c = r.comment_x >= HOT_COMMENTS; return hot === 'v' ? v : hot === 'c' ? c : v || c; };
   const mine = S.refs.filter(r => !cl || r.fit === cl);
-  const base0 = mine.filter(r => (!rg || r.region === rg) && (!src || (r.source||'').startsWith(src)) && (!form || (form === 'short') === !!isShort(r)) && (!hot || isHot(r))
+  const base0 = mine.filter(r => (!rg || r.region === rg) && (!src || (r.source||'').startsWith(src)) && (!form || (form === 'short') === !!isShort(r)) && (!hot || isHot(r)) && inPeriod(r)
     && (!q || [r.title, r.topic_ko, r.author, r.url, r.note, r.source].some(v => (v||'').toLowerCase().includes(q))));
   const pc = p => base0.filter(r => PGROUP(r) === p).length;
   $('#plat').innerHTML = [['', '전체', base0.length], ['youtube', '유튜브', pc('youtube')], ['instagram', '인스타그램', pc('instagram')], ['tiktok', '틱톡', pc('tiktok')]]
@@ -485,7 +493,7 @@ function renderGrid() {
   }).join('') : `<div class="empty">${emptyMsg}</div>`;
   $$('#grid .go').forEach(b => b.onclick = () => openRef(b.dataset.id));
 }
-['q','f-region','f-source','f-form','f-hot'].forEach(id => $('#'+id).addEventListener('input', renderGrid));
+['q','f-region','f-source','f-form','f-hot','f-period','f-from','f-to'].forEach(id => $('#'+id).addEventListener('input', renderGrid));
 
 // ---------- 채널별·플랫폼별 수집 키워드 (추천 · 추가 · 삭제 · 저장) ----------
 const kwPlat = () => S.plat === 'instagram' ? 'instagram' : S.plat === 'tiktok' ? 'tiktok' : 'youtube';
@@ -794,9 +802,10 @@ $('#url').addEventListener('keydown', e => { if (e.key === 'Enter') $('#start').
 $('#collect').onclick = async () => {
   if (S.kwDirty.size && !await saveKw()) return;          // 고친 키워드는 저장부터
   const pl = kwPlat(), pn = {instagram: '인스타그램', tiktok: '틱톡', youtube: '유튜브'}[pl];
-  const j = await api('/api/collect', {fit: S.client, region: $('#f-region').value, platform: pl});
+  const per = +$('#f-period').value || 0, period = per && per <= 3 ? 'day' : per && per <= 7 ? 'week' : per && per <= 90 ? 'month' : per ? 'year' : 'week';
+  const j = await api('/api/collect', {fit: S.client, region: $('#f-region').value, platform: pl, period});
   if (j.error) return $('#job-collect').innerHTML = `<div class="note">${esc(j.error)}</div>`;
-  watch(j.job, $('#job-collect'), `${S.client ? (S.brands[S.client] || S.client) : '전체 채널'} ${pn} 레퍼런스 수집`, loadRefs);
+  watch(j.job, $('#job-collect'), `${S.client ? (S.brands[S.client] || S.client) : '전체 채널'} ${pn} 레퍼런스 수집${pl === 'youtube' ? ' · 업로드 ' + {day:'1일', week:'1주', month:'1개월', year:'1년'}[period] + ' 이내' : ''}`, loadRefs);
 };
 
 $$('[data-run]').forEach(b => b.onclick = () => {
