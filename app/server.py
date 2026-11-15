@@ -118,38 +118,140 @@ def load_refs():
     return refs
 
 
-# ---------------- 백그라운드 작업 ----------------
+# ---------------- 백그라운드 작업 (진행률 · 남은 시간) ----------------
+STATS = os.path.join(REELS, 'data', 'job_stats.json')   # 단계별 실제 소요 시간 기록 → 다음 예상 시간에 반영
+EST = {'add': 8, 'fetch': 45, 'analysis': 300, 'scripts5': 240, 'plan': 180, 'instagram': 180, 'yt_query': 35}
+
+
+def est_for(key, default=None):
+    """같은 종류 작업의 최근 실제 소요 시간 평균(없으면 기본값)."""
+    try:
+        hist = json.load(open(STATS, encoding='utf-8')).get(key) or []
+    except (OSError, ValueError):
+        hist = []
+    return round(sum(hist) / len(hist)) if hist else (default or EST.get(key, 60))
+
+
+def record(key, sec):
+    try:
+        d = json.load(open(STATS, encoding='utf-8'))
+    except (OSError, ValueError):
+        d = {}
+    d[key] = (d.get(key) or [])[-4:] + [round(sec, 1)]
+    os.makedirs(os.path.dirname(STATS), exist_ok=True)
+    json.dump(d, open(STATS, 'w', encoding='utf-8'))
+
+
+def step(label, argv, key=None, est=None, units=0, unit_re=None, env=None):
+    """작업 단계. units·unit_re 가 있으면 출력 줄 수로 진행률을 세고, 없으면 예상 시간으로 추정한다."""
+    return {'label': label, 'argv': argv, 'key': key, 'est': est or est_for(key), 'units': units,
+            'unit_re': unit_re, 'env': env, 'done_units': 0, 'state': 'todo', 'took': None}
+
+
 def run_job(kind, steps, ref=None, stop_on_error=True):
-    """steps: [(설명, argv)] 를 순서대로 실행. 하나라도 실패하면 멈춘다."""
+    """steps: step(...) 목록을 순서대로 실행. 하나라도 실패하면 멈춘다(stop_on_error=False 면 건너뜀)."""
     jid = uuid.uuid4().hex[:10]
-    job = JOBS[jid] = {'id': jid, 'kind': kind, 'ref': ref, 'status': 'running', 'log': '', 'started': time.time()}
+    job = JOBS[jid] = {'id': jid, 'kind': kind, 'ref': ref, 'status': 'running', 'log': '', 'started': time.time(),
+                       'ended': None, 'steps': steps, 'cur': 0, 'step_started': time.time()}
 
     def work():
-        for label, argv in steps:
-            job['log'] += f'\n▶ {label}\n'
+        for i, st in enumerate(steps):
+            job['cur'], job['step_started'], st['state'] = i, time.time(), 'run'
+            job['log'] += f"\n▶ {st['label']}\n"
+            rx = re.compile(st['unit_re']) if st['unit_re'] else None
             try:
-                p = subprocess.Popen(argv, cwd=ROOT, env=ENV, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                p = subprocess.Popen(st['argv'], cwd=ROOT, env=st['env'] or ENV, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                      stdin=subprocess.DEVNULL, text=True, encoding='utf-8', errors='replace')
                 for line in p.stdout:
                     job['log'] = (job['log'] + line)[-12000:]
-                if p.wait() != 0 and not stop_on_error:
-                    job['log'] += '  (이 링크는 건너뜀)\n'
-                    continue
-                if p.returncode != 0:
-                    job['status'] = 'error'
-                    if 'authenticate' in job['log'] or 'OAuth' in job['log']:
-                        job['log'] += '\n※ Claude Code 로그인이 만료됐습니다. 터미널(cmd)에서 claude 를 실행하고 /login 한 뒤 다시 눌러 주세요.\n'
-                    job['log'] += f'\n✖ 실패 (종료 코드 {p.returncode})\n'
-                    return
+                    if rx and rx.search(line):
+                        st['done_units'] += 1
+                rc = p.wait()
             except Exception as e:  # 실행 파일 없음 등
-                job['status'] = 'error'
+                rc = -1
                 job['log'] += f'\n✖ {e.__class__.__name__}: {e}\n'
-                return
-        job['status'] = 'done'
+            st['took'] = time.time() - job['step_started']
+            if rc == 0:
+                st['state'] = 'done'
+                if st['key'] and not st['units']:
+                    record(st['key'], st['took'])
+                elif st['key'] and st['done_units']:
+                    record(st['key'], st['took'] / st['done_units'])
+                continue
+            st['state'] = 'fail'
+            if not stop_on_error:
+                job['log'] += '  (이 링크는 건너뜀)\n'
+                continue
+            job['status'], job['ended'] = 'error', time.time()
+            if 'authenticate' in job['log'] or 'OAuth' in job['log'] or 'API key' in job['log']:
+                job['log'] += '\n※ Claude 인증이 없습니다. 오른쪽 위 「API 키 설정」에서 Anthropic API 키를 등록하거나, 터미널(cmd)에서 claude 실행 후 /login 하세요.\n'
+            job['log'] += f'\n✖ 실패 (종료 코드 {rc})\n'
+            return
+        job['status'], job['ended'] = 'done', time.time()
         job['log'] += '\n✔ 완료\n'
 
     threading.Thread(target=work, daemon=True).start()
     return job
+
+
+def job_view(job):
+    """화면용 요약: 단계 상태, 진행률(0~1), 남은 시간(초, 모르면 None)."""
+    now = job['ended'] or time.time()
+    steps, total, done, eta, over = job['steps'], 0.0, 0.0, 0.0, False
+    for st in steps:
+        w = st['est'] * (st['units'] or 1)
+        total += w
+        if st['state'] in ('done', 'fail'):
+            done += w
+        elif st['state'] == 'run':
+            el = now - job['step_started']
+            if st['units']:
+                frac = min(st['done_units'] / st['units'], 0.99)
+                eta += (el / frac * (1 - frac)) if frac >= 0.08 else max(w - el, 0)
+            else:
+                frac = min(el / w, 0.95)
+                over = el > w
+                eta += max(w - el, 0)
+            done += w * frac
+        else:
+            eta += w
+    fin = job['status'] != 'running'
+    return {'id': job['id'], 'kind': job['kind'], 'ref': job['ref'], 'status': job['status'], 'log': job['log'],
+            'elapsed': round(now - job['started']), 'progress': 1 if job['status'] == 'done' else round(done / total, 3) if total else 0,
+            'eta': 0 if fin else (None if over and len(steps) - job['cur'] == 1 else round(eta)), 'over': over and not fin,
+            'steps': [{'label': st['label'], 'state': st['state'], 'units': st['units'], 'done_units': st['done_units'],
+                       'took': round(st['took']) if st['took'] else None} for st in steps]}
+
+
+def clean_env():
+    """claude CLI 용 환경: 데스크톱 앱이 넣은 세션 변수를 빼고 .env 의 키만 넘긴다."""
+    return {k: v for k, v in ENV.items() if not re.match(r'(CLAUDE|ANTHROPIC_BASE_URL|ANTHROPIC_AUTH|AI_AGENT$|BAGGAGE$)', k)}
+
+
+def claude_logged_in():
+    exe = shutil.which('claude')
+    if not exe:
+        return False
+    try:
+        r = subprocess.run([exe, 'auth', 'status'], env=clean_env(), capture_output=True, text=True, timeout=20,
+                           encoding='utf-8', errors='replace', stdin=subprocess.DEVNULL)
+        return bool(json.loads(r.stdout).get('loggedIn'))
+    except Exception:
+        return False
+
+
+KEYS = {'APIFY_TOKEN': r'[\w\-~.]{10,200}', 'ANTHROPIC_API_KEY': r'sk-ant-[\w\-]{20,300}'}
+
+
+def yt_query_count(c, fit, region):
+    n = 0
+    for ch, v in c['channels'].items():
+        if fit and ch != fit:
+            continue
+        n += sum(len(v.get(k, [])) for reg, k in (('KR', 'kr'), ('GLOBAL', 'global')) if not region or reg == region)
+    if not fit:
+        n += sum(len(c['hot_any_field'][k]) for reg, k in (('KR', 'kr'), ('GLOBAL', 'global')))
+    return max(n, 1)
 
 
 def py(*args):
@@ -224,12 +326,16 @@ class H(BaseHTTPRequestHandler):
                                    'brands': {k: v.get('brand') for k, v in c['channels'].items()},
                                    'keywords': {k: {'kr': v.get('kr', []), 'global': v.get('global', [])} for k, v in c['channels'].items()},
                                    'apify': bool(ENV.get('APIFY_TOKEN')), 'claude': bool(shutil.which('claude')),
+                                   'suggest': {k: v for k, v in json.loads(read(os.path.join(APP, 'keyword_suggestions.json'), '{}') or '{}').items() if not k.startswith('_')},
                                    'instagram': {'': ig_settings(c, None), **{ch: ig_settings(c, ch) for ch in c['channels']}}})
+        if path == '/api/keys':
+            return self.send(200, {'keys': {k: bool(ENV.get(k)) for k in KEYS}, 'claude_cli': claude_logged_in(), 'claude_installed': bool(shutil.which('claude'))})
         if path == '/api/weekly':
             return self.send(200, weekly())
         m = re.fullmatch(r'/api/job/(\w+)', path)
         if m:
-            return self.send(200, JOBS.get(m.group(1)) or {'status': 'error', 'log': '없는 작업'})
+            j = JOBS.get(m.group(1))
+            return self.send(200, job_view(j) if j else {'status': 'error', 'log': '없는 작업', 'steps': [], 'progress': 0})
         m = re.fullmatch(r'/api/ref/([\w-]+)', path)
         if m and safe_id(m.group(1)):
             rid = m.group(1)
@@ -267,19 +373,42 @@ class H(BaseHTTPRequestHandler):
                 steps = []
                 if url.startswith('http'):
                     add = py('reels/scripts/collect.py', 'add', url, '--region', 'KR' if body.get('region') == 'KR' else 'GLOBAL')
-                    steps.append(('보관함에 추가', add + (['--fit', fit] if fit else [])))
+                    steps.append(step('보관함에 추가', add + (['--fit', fit] if fit else []), key='add'))
                 fetch = py('reels/scripts/fetch_ref.py', rid, '--frames')
                 if body.get('cookies'):
                     fetch += ['--cookies-from-browser', 'chrome']
-                steps.append(('대본·화면 내려받기 (yt-dlp · ffmpeg)', fetch))
+                steps.append(step('대본·화면 내려받기', fetch, key='fetch'))
                 return self.send(200, {'job': run_job('fetch', steps, rid)['id'], 'ref': rid})
             if path == '/api/step':  # Claude 로 분석·대본·기획
-                rid, step = safe_id(body.get('id')), body.get('step')
-                if not rid or step not in STEP_FILE:
+                rid, stepname = safe_id(body.get('id')), body.get('step')
+                if not rid or stepname not in STEP_FILE:
                     return self.send(400, {'error': '잘못된 요청'})
-                label = {'analysis': '화면·대본 분석', 'scripts5': '대본 5개 작성', 'plan': '제작 기획 작성'}[step]
-                job = run_job(step, [(f'{label} (Claude Code · 몇 분 걸립니다)', claude_cmd(step_prompt(step, rid, fit)))], rid)
+                label = {'analysis': '화면·대본 분석', 'scripts5': '대본 5개 작성', 'plan': '제작 기획 작성'}[stepname]
+                job = run_job(stepname, [step(label, claude_cmd(step_prompt(stepname, rid, fit)), key=stepname, env=clean_env())], rid)
                 return self.send(200, {'job': job['id'], 'ref': rid})
+            if path == '/api/keys':  # 토큰·API 키 등록/삭제 (.env — 값은 화면에 되돌려 주지 않는다)
+                for k, pat in KEYS.items():
+                    if k in body:
+                        v = str(body.get(k) or '').strip()
+                        if v and not re.fullmatch(pat, v):
+                            return self.send(400, {'error': f'{k} 형식이 올바르지 않습니다.'})
+                        save_dotenv(k, v)
+                return self.send(200, {'ok': True, 'keys': {k: bool(ENV.get(k)) for k in KEYS}})
+            if path == '/api/keywords':  # 채널별 유튜브 수집 키워드 저장
+                if not fit:
+                    return self.send(400, {'error': '고객 채널을 먼저 선택해 주세요.'})
+                def kws(v):
+                    out = []
+                    for x in v if isinstance(v, list) else []:
+                        x = re.sub(r'\s+', ' ', str(x)).strip()[:60]
+                        if x and x not in out:
+                            out.append(x)
+                    return out[:20]
+                p = os.path.join(REELS, 'config.json')
+                c = json.load(open(p, encoding='utf-8'))
+                c['channels'][fit]['kr'], c['channels'][fit]['global'] = kws(body.get('kr')), kws(body.get('global'))
+                json.dump(c, open(p, 'w', encoding='utf-8'), ensure_ascii=False, indent=2)
+                return self.send(200, {'ok': True, 'kr': c['channels'][fit]['kr'], 'global': c['channels'][fit]['global']})
             if path == '/api/instagram':  # 인스타 수집 설정 저장 (토큰은 .env, 계정·해시태그는 config.json)
                 if 'token' in body:
                     tok = str(body.get('token') or '').strip()
@@ -305,21 +434,23 @@ class H(BaseHTTPRequestHandler):
                 if not urls:
                     return self.send(400, {'error': '인스타그램 /reel/ · /p/, 틱톡, 유튜브 영상 링크를 한 줄에 하나씩 넣어 주세요.'})
                 reg = 'KR' if body.get('region') == 'KR' else 'GLOBAL'
-                steps = [(f'보관함에 추가 {i}/{len(urls[:30])} · {u[:70]}', py('reels/scripts/collect.py', 'add', u, '--region', reg) + (['--fit', fit] if fit else []))
+                steps = [step(f'링크 {i}', py('reels/scripts/collect.py', 'add', u, '--region', reg) + (['--fit', fit] if fit else []), key='add')
                          for i, u in enumerate(urls[:30], 1)]
                 return self.send(200, {'job': run_job('bulk', steps, stop_on_error=False)['id'], 'count': len(steps)})
             if path == '/api/collect' and body.get('platform') == 'instagram':  # 인스타 계정·해시태그 수집 (Apify)
                 if not ENV.get('APIFY_TOKEN'):
                     return self.send(400, {'error': 'Apify 토큰이 없습니다. 먼저 토큰을 저장해 주세요.'})
                 argv = py('reels/scripts/collect.py', 'instagram') + (['--fit', fit] if fit else [])
-                return self.send(200, {'job': run_job('collect', [('인스타그램 릴스 수집 (Apify · 계정 수에 따라 몇 분)', argv)])['id']})
+                return self.send(200, {'job': run_job('collect', [step('인스타그램 릴스 수집 (Apify)', argv, key='instagram')])['id']})
             if path == '/api/collect':  # 유튜브 레퍼런스 수집
                 argv = py('reels/scripts/collect.py', 'youtube', '--period', 'month' if body.get('period') == 'month' else 'week')
                 if fit:
                     argv += ['--fit', fit]
                 if body.get('region') in ('KR', 'GLOBAL'):
                     argv += ['--region', body['region']]
-                return self.send(200, {'job': run_job('collect', [('유튜브 레퍼런스 수집', argv)])['id']})
+                n = yt_query_count(cfg(), fit, body.get('region') if body.get('region') in ('KR', 'GLOBAL') else None)
+                st = step(f'유튜브 레퍼런스 수집 · 키워드 {n}개', argv, key='yt_query', units=n, unit_re=r'^\[(KR|GLOBAL)\] ')
+                return self.send(200, {'job': run_job('collect', [st])['id']})
             if path == '/api/set':  # 상태·채널 변경
                 rid = safe_id(body.get('id'))
                 if not rid:

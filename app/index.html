@@ -136,8 +136,19 @@ table.w th,table.w td{border-bottom:1px solid var(--line);padding:8px 9px;vertic
 table.w th{font-size:12px;color:var(--sub);white-space:nowrap;position:sticky;top:0;background:var(--card)}
 .pill{display:inline-block;font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:5px;background:#EEF1F5;color:var(--sub);white-space:nowrap}
 .pill.s{background:#FDEBD9;color:var(--warn)}
-.kw{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.kw span{font-size:12px;background:#EEF1F5;border-radius:999px;padding:3px 10px;color:#4A5362}
+.kw{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.kw .kh{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px;margin-bottom:8px}
+.kw .kh small{font-weight:500;color:var(--sub)}
+.kw .kr{display:grid;grid-template-columns:44px 1fr;gap:8px;align-items:start;margin:8px 0}
+.kw .kr>b{font-size:12.5px;color:var(--sub);padding-top:5px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;background:var(--ac-soft);color:var(--ac);font-weight:600;border-radius:999px;padding:3px 4px 3px 11px}
+.chip button{border:0;background:none;color:inherit;cursor:pointer;font-size:14px;line-height:1;padding:2px 6px;border-radius:50%}
+.chip button:hover{background:#cfdcff}
+.chip.sg{background:#fff;border:1px dashed #B9C2D0;color:#4A5362;font-weight:500;padding:3px 11px;cursor:pointer}
+.chip.sg:hover{border-color:var(--ac);color:var(--ac)}
+.kw input{border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:12.5px;width:190px}
+.kw .sgl{font-size:12px;color:var(--sub);margin-top:6px}
 .igrid{display:grid;grid-template-columns:1.25fr 1fr;gap:26px}
 .igh{font-weight:700;font-size:15px;margin-bottom:4px}
 .ig2{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;margin-top:10px}
@@ -145,6 +156,37 @@ table.w th{font-size:12px;color:var(--sub);white-space:nowrap;position:sticky;to
 textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font:13.5px/1.5 inherit;font-family:inherit;resize:vertical;display:block;margin-top:4px;background:var(--card);color:var(--ink)}
 textarea:focus{outline:2px solid var(--ac);outline-offset:1px}
 .pill.ok{background:#DDF3E7;color:#1E7A4F}
+.prog{border:1px solid var(--line);border-radius:12px;background:#FAFBFD;margin-top:14px;padding:14px 16px}
+.prog .ph{display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:700;font-size:14px}
+.prog .pst{font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--ac-soft);color:var(--ac)}
+.prog.done .pst{background:#DDF3E7;color:#1E7A4F}.prog.error .pst{background:#FBE3E0;color:#B3261E}
+.psteps{list-style:none;display:flex;gap:0;margin:14px 0 4px;padding:0;overflow-x:auto}
+.psteps li{flex:1 1 0;min-width:74px;position:relative;text-align:center;font-size:12px;color:var(--sub);padding-top:30px}
+.psteps li::before{content:attr(data-n);position:absolute;top:0;left:50%;transform:translateX(-50%);width:24px;height:24px;border-radius:50%;background:#fff;border:2px solid #CBD2DC;display:grid;place-items:center;font-weight:700;font-size:11.5px;color:#98A1AF;z-index:1}
+.psteps li::after{content:'';position:absolute;top:11px;left:calc(-50% + 12px);width:calc(100% - 24px);height:2px;background:#CBD2DC}
+.psteps li:first-child::after{display:none}
+.psteps li.done::before{content:'✓';background:var(--ac);border-color:var(--ac);color:#fff}
+.psteps li.done::after,.psteps li.run::after{background:var(--ac)}
+.psteps li.run{color:var(--ink);font-weight:700}
+.psteps li.run::before{border-color:var(--ac);color:var(--ac);animation:pulse 1.2s ease-in-out infinite}
+.psteps li.fail::before{content:'!';background:#B3261E;border-color:#B3261E;color:#fff}
+@keyframes pulse{50%{box-shadow:0 0 0 6px #2f5bd322}}
+.pbar{height:10px;border-radius:999px;background:#E3E7ED;overflow:hidden;margin-top:12px}
+.pbar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#2F5BD3,#6C8DF0);transition:width .8s ease}
+.prog.done .pbar i{background:#2FA36B}.prog.error .pbar i{background:#B3261E}
+.pmeta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.pmeta div span{display:block;font-size:11.5px;color:var(--sub)}
+.pmeta div b{font-size:18px;font-variant-numeric:tabular-nums}
+.prog details{border-top:1px solid var(--line);margin-top:12px;padding:8px 0 0}
+.prog pre{margin:8px 0 0;padding:10px 12px;font:12px/1.5 Consolas,monospace;white-space:pre-wrap;max-height:170px;overflow:auto;background:#0F1217;color:#D7DCE4;border-radius:8px}
+@media(prefers-reduced-motion:reduce){.psteps li.run::before{animation:none}.pbar i{transition:none}}
+dialog{border:0;border-radius:16px;padding:0;width:min(560px,92vw);box-shadow:0 20px 60px #0004;color:var(--ink)}
+dialog::backdrop{background:#10141c88}
+.dlg{padding:22px 24px}
+.dlg h2{margin:0 0 4px;font-size:19px}
+.keyrow{border-top:1px solid var(--line);padding:14px 0}
+.keyrow .kt{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14.5px}
+.keyrow input{width:100%;margin-top:8px}
 [hidden]{display:none!important}
 @media(max-width:820px){.filters{grid-template-columns:1fr 1fr}.igrid{grid-template-columns:1fr}.steps .lb{display:none}.refhead{grid-template-columns:1fr}.refhead .th{max-width:140px}.tl{grid-template-columns:1fr}.tl .hd.ko{display:none}.tl .cell.ko{padding-top:0}.hooktext{font-size:18px}}
 </style>
@@ -161,6 +203,7 @@ textarea:focus{outline:2px solid var(--ac);outline-offset:1px}
         <button id="mode-studio" aria-pressed="true">레퍼런스 스튜디오</button>
         <button id="mode-weekly" aria-pressed="false">주간 주제 리서치</button>
       </div>
+      <button class="btn ghost sm" id="keys-open" style="padding:8px 12px">API 키 설정</button>
       <label class="client"><span>고객 채널</span><select id="client"></select></label>
     </div>
   </header>
@@ -304,6 +347,30 @@ textarea:focus{outline:2px solid var(--ac);outline-offset:1px}
   </section>
 </div>
 
+<dialog id="keys">
+  <div class="dlg">
+    <h2>API 키 설정</h2>
+    <div class="sub">이 PC의 <code>.env</code> 파일에만 저장됩니다. 저장한 값은 화면에 다시 표시하지 않습니다.</div>
+    <div class="keyrow">
+      <div class="kt"><span>Anthropic API 키 <small class="sub" style="font-weight:500">— 분석 · 대본 5개 · 제작 기획</small></span><span class="pill" id="k-anth"></span></div>
+      <div class="sub" id="k-cli"></div>
+      <input id="k-anth-in" type="password" autocomplete="off" placeholder="sk-ant-…  (console.anthropic.com → API Keys)">
+    </div>
+    <div class="keyrow">
+      <div class="kt"><span>Apify 토큰 <small class="sub" style="font-weight:500">— 인스타그램 계정·해시태그 수집</small></span><span class="pill" id="k-apify"></span></div>
+      <input id="k-apify-in" type="password" autocomplete="off" placeholder="apify_api_…  (apify.com → Settings → API tokens)">
+    </div>
+    <div class="keyrow sub">유튜브·틱톡 수집과 링크 가져오기는 키 없이 동작합니다. 키를 지우려면 「삭제」를 누르세요.</div>
+    <div id="k-msg"></div>
+    <div class="row" style="justify-content:flex-end;margin-top:6px">
+      <button class="btn ghost sm" id="k-del-anth">Anthropic 키 삭제</button>
+      <button class="btn ghost sm" id="k-del-apify">Apify 토큰 삭제</button>
+      <button class="btn ghost" id="k-close">닫기</button>
+      <button class="btn" id="k-save">저장</button>
+    </div>
+  </div>
+</dialog>
+
 <script>
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -330,7 +397,8 @@ function roleTag(role) {
 // ---------- 보관함 ----------
 async function loadRefs() {
   const d = await api('/api/refs');
-  Object.assign(S, {refs:d.refs, channels:d.channels, brands:d.brands||{}, keywords:d.keywords||{}, statuses:d.statuses, ig:d.instagram||{}, apify:!!d.apify});
+  Object.assign(S, {refs:d.refs, channels:d.channels, brands:d.brands||{}, statuses:d.statuses, ig:d.instagram||{}, apify:!!d.apify, suggest:d.suggest||{}});
+  if (!S.kwDirty) S.keywords = d.keywords || {};
   if (!$('#client').options.length) {
     const opt = c => `<option value="${esc(c)}">${esc(S.brands[c] || c)}</option>`;
     $('#client').innerHTML = '<option value="">전체 고객 채널</option>' + S.channels.map(opt).join('');
@@ -361,8 +429,7 @@ function renderGrid() {
   $('#collect').textContent = cl ? `${S.brands[cl] || cl} 유튜브 새로 수집` : '유튜브 새로 수집';
   $('#collect').hidden = S.plat === 'instagram' || S.plat === 'tiktok';
   renderIg();
-  const kw = cl && S.keywords[cl] ? [...S.keywords[cl].kr, ...S.keywords[cl].global] : [];
-  $('#kw').innerHTML = kw.length ? '<span style="background:none;padding-left:0;color:var(--sub)">수집 키워드</span>' + kw.map(k => `<span>${esc(k)}</span>`).join('') : '';
+  renderKw();
   const pname = {instagram:'인스타그램', tiktok:'틱톡', youtube:'유튜브'}[S.plat];
   const emptyMsg = !mine.length ? `${cl ? esc(S.brands[cl]||cl) + ' 채널의 수집분이 아직 없습니다.' : '보관함이 비어 있습니다.'} 위에 링크를 넣거나 「유튜브 새로 수집」을 눌러 주세요.`
     : S.plat && !pc(S.plat) ? `${pname} 수집분이 없습니다. 위 입력란에 ${pname} 링크를 넣어 추가해 주세요.` : '조건에 맞는 레퍼런스가 없습니다. 상태 탭을 「전체」로 바꿔 보세요.';
@@ -383,6 +450,38 @@ function renderGrid() {
   $$('#grid .go').forEach(b => b.onclick = () => openRef(b.dataset.id));
 }
 ['q','f-region','f-source','f-form'].forEach(id => $('#'+id).addEventListener('input', renderGrid));
+
+// ---------- 채널별 수집 키워드 (추천 · 추가 · 삭제 · 저장) ----------
+function renderKw() {
+  const cl = S.client, box = $('#kw');
+  box.hidden = S.plat === 'instagram' || S.plat === 'tiktok';
+  if (!cl) return box.innerHTML = '<div class="sub">오른쪽 위에서 고객 채널을 고르면 그 채널의 유튜브 수집 키워드를 추천받고 더하거나 뺄 수 있습니다.</div>';
+  const k = S.keywords[cl] || (S.keywords[cl] = {kr:[], global:[]}), sg = S.suggest[cl] || {kr:[], global:[]};
+  const row = (reg, label, ph) => {
+    const rest = (sg[reg] || []).filter(x => !k[reg].includes(x));
+    return `<div class="kr"><b>${label}</b><div>
+      <div class="chips">${k[reg].map((x, i) => `<span class="chip">${esc(x)}<button title="빼기" data-del="${reg}:${i}">×</button></span>`).join('') || '<span class="sub">키워드 없음</span>'}
+        <input data-add="${reg}" placeholder="${ph}" maxlength="60"></div>
+      ${rest.length ? `<div class="sgl">추천</div><div class="chips">${rest.map(x => `<button class="chip sg" data-sg="${reg}" data-v="${esc(x)}">+ ${esc(x)}</button>`).join('')}</div>` : ''}
+    </div></div>`;
+  };
+  box.innerHTML = `<div class="kh"><span>수집 키워드 <small>· ${esc(S.brands[cl] || cl)} · 유튜브 검색에 사용</small></span><span class="row"><small id="kw-state" class="sub">${S.kwDirty ? '저장 안 됨' : ''}</small><button class="btn sm" id="kw-save" ${S.kwDirty ? '' : 'disabled'}>키워드 저장</button></span></div>`
+    + row('kr', '국내', '국내 키워드 입력 후 Enter') + row('global', '해외', '해외(영문) 키워드 입력 후 Enter');
+  const touch = () => { S.kwDirty = true; renderKw(); };
+  box.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { const [reg, i] = b.dataset.del.split(':'); k[reg].splice(+i, 1); touch(); });
+  box.querySelectorAll('[data-sg]').forEach(b => b.onclick = () => { k[b.dataset.sg].push(b.dataset.v); touch(); });
+  box.querySelectorAll('[data-add]').forEach(inp => inp.onkeydown = e => {
+    if (e.key !== 'Enter') return;
+    const v = inp.value.replace(/\s+/g, ' ').trim(), reg = inp.dataset.add;
+    if (v && !k[reg].includes(v)) { k[reg].push(v); touch(); box.querySelector(`[data-add="${reg}"]`).focus(); }
+  });
+  $('#kw-save').onclick = async () => {
+    const r = await api('/api/keywords', {fit: cl, kr: k.kr, global: k.global});
+    if (r.error) return $('#kw-state').textContent = r.error;
+    S.keywords[cl] = {kr: r.kr, global: r.global}; S.kwDirty = false; renderKw();
+    $('#kw-state').textContent = `저장했습니다 · 국내 ${r.kr.length} · 해외 ${r.global.length} — 「유튜브 새로 수집」부터 적용`;
+  };
+}
 
 // ---------- 인스타그램·틱톡 가져오기 패널 ----------
 let igKey = null;
@@ -420,29 +519,75 @@ $('#ig-run').onclick = async () => {
   if (!await saveIg()) return;
   const j = await api('/api/collect', {platform: 'instagram', fit: S.client});
   if (j.error) return $('#job-ig').innerHTML = `<div class="note">${esc(j.error)}</div>`;
-  watch(j.job, $('#job-ig'), '인스타그램 릴스 수집 중', loadRefs);
+  watch(j.job, $('#job-ig'), '인스타그램 릴스 수집', loadRefs);
 };
 $('#bulk-run').onclick = async () => {
   const j = await api('/api/bulk', {urls: $('#bulk').value, fit: S.client, region: $('#bulk-region').value});
   if (j.error) return $('#job-ig').innerHTML = `<div class="note">${esc(j.error)}</div>`;
-  watch(j.job, $('#job-ig'), `링크 ${j.count}개 추가 중`, ok => { if (ok) $('#bulk').value = ''; S.status = ''; loadRefs(); });
+  watch(j.job, $('#job-ig'), `링크 ${j.count}개 보관함에 추가`, ok => { if (ok) $('#bulk').value = ''; S.status = ''; loadRefs(); });
 };
-$('#client').onchange = () => { S.client = $('#client').value; store.set('client', S.client); renderGrid(); if (!$('#weekly').hidden) renderWeekly(); };
+$('#client').onchange = () => { if (S.kwDirty && !confirm('저장하지 않은 키워드 변경이 있습니다. 버리고 채널을 바꿀까요?')) { $('#client').value = S.client; return; }
+  if (S.kwDirty) { S.kwDirty = false; loadRefs(); }
+  S.client = $('#client').value; store.set('client', S.client); renderGrid(); if (!$('#weekly').hidden) renderWeekly(); };
 
 // ---------- 작업 로그 ----------
+const dur = t => t == null ? '—' : t >= 3600 ? `${Math.floor(t/3600)}시간 ${Math.floor(t%3600/60)}분` : t >= 60 ? `${Math.floor(t/60)}분 ${String(Math.floor(t%60)).padStart(2,'0')}초` : `${Math.max(0, Math.floor(t))}초`;
 function watch(jobId, box, label, onDone) {
-  box.innerHTML = `<div class="job"><div class="jh"><span>${label}</span><span class="st st-running">진행 중…</span></div><pre></pre></div>`;
-  const pre = box.querySelector('pre'), st = box.querySelector('.st');
+  box.innerHTML = `<div class="prog"><div class="ph"><span>${esc(label)}</span><span class="pst">진행 중</span></div>
+    <ol class="psteps"></ol><div class="pbar"><i style="width:0%"></i></div>
+    <div class="pmeta"><div><span>진행률</span><b class="pp">0%</b></div><div><span>경과 시간</span><b class="pe">0초</b></div><div><span>남은 시간 (예상)</span><b class="pr">계산 중</b></div></div>
+    <details><summary>실행 로그 보기</summary><pre></pre></details></div>`;
+  const q = c => box.querySelector(c), card = q('.prog');
+  let j = null, got = 0, timer = null;
+  const paint = () => {
+    if (!j || !card.isConnected) return clearInterval(timer);
+    const run = j.status === 'running', drift = run ? (Date.now() - got) / 1000 : 0;
+    const many = j.steps.length > 8, cur = j.steps.findIndex(x => x.state === 'run');
+    q('.psteps').innerHTML = many
+      ? `<li data-n="${j.steps.filter(x => x.state === 'done').length}" class="${run ? 'run' : 'done'}" style="min-width:100%">전체 ${j.steps.length}개 중 ${j.steps.filter(x => x.state !== 'todo' && x.state !== 'run').length}개 처리${cur >= 0 ? ' · 지금: ' + esc(j.steps[cur].label) : ''}</li>`
+      : j.steps.map((x, i) => `<li data-n="${i+1}" class="${x.state}">${esc(x.label)}${x.units ? `<br>${x.done_units}/${x.units}` : ''}${x.took && x.state === 'done' ? `<br>${dur(x.took)}` : ''}</li>`).join('');
+    const pct = Math.round((j.progress || 0) * 100);
+    q('.pbar i').style.width = pct + '%'; q('.pp').textContent = pct + '%';
+    q('.pe').textContent = dur((j.elapsed || 0) + drift);
+    q('.pr').textContent = !run ? (j.status === 'done' ? '완료' : '중단됨') : j.eta == null ? '마무리 중 (예상보다 오래 걸림)' : '약 ' + dur(Math.max(j.eta - drift, 1));
+    q('pre').textContent = (j.log||'').trim();
+    q('.pst').textContent = run ? '진행 중' : j.status === 'done' ? '완료' : '실패';
+    card.className = 'prog ' + (run ? '' : j.status);
+    if (j.status === 'error') q('details').open = true;
+  };
   const tick = async () => {
-    const j = await api('/api/job/' + jobId);
-    pre.textContent = (j.log||'').trim(); pre.scrollTop = pre.scrollHeight;
+    j = await api('/api/job/' + jobId); got = Date.now(); paint();
     if (j.status === 'running') return setTimeout(tick, 1500);
-    st.className = 'st st-' + j.status; st.textContent = j.status === 'done' ? '완료' : '실패';
-    if (j.status === 'done') setTimeout(() => { if (st.textContent === '완료') box.innerHTML = ''; }, 2500);
+    clearInterval(timer);
+    if (j.status === 'done') setTimeout(() => { if (card.isConnected && card.classList.contains('done')) box.innerHTML = ''; }, 6000);
     onDone && onDone(j.status === 'done');
   };
+  timer = setInterval(paint, 1000);   // 서버 응답 사이에도 1초마다 남은 시간을 줄여 보여 준다
   tick();
 }
+
+// ---------- API 키 설정 ----------
+async function loadKeys() {
+  const d = await api('/api/keys'), pill = (el, on) => { el.textContent = on ? '등록됨' : '없음'; el.className = 'pill' + (on ? ' ok' : ''); };
+  pill($('#k-anth'), d.keys.ANTHROPIC_API_KEY); pill($('#k-apify'), d.keys.APIFY_TOKEN);
+  $('#k-cli').textContent = !d.claude_installed ? 'Claude Code CLI 가 설치돼 있지 않습니다.' : d.claude_cli ? 'Claude Code CLI 로그인됨 — API 키 없이도 분석이 동작합니다.' : d.keys.ANTHROPIC_API_KEY ? 'CLI 로그인은 없지만 등록한 API 키로 분석합니다(사용량만큼 과금).' : 'CLI 로그인 없음 — 여기에 API 키를 등록하거나 터미널에서 claude 실행 후 /login 하세요.';
+  S.apify = d.keys.APIFY_TOKEN; if (!$('#igpanel').hidden) renderIg();
+}
+$('#keys-open').onclick = () => { $('#k-msg').innerHTML = ''; $('#keys').showModal(); loadKeys(); };
+$('#k-close').onclick = () => $('#keys').close();
+async function postKeys(body, msg) {
+  const r = await api('/api/keys', body);
+  $('#k-msg').innerHTML = `<div class="note"${r.error ? '' : ' style="background:#E9F7EF;border-color:#BFE3CD;color:#1E5E3F"'}>${esc(r.error || msg)}</div>`;
+  if (!r.error) { $('#k-anth-in').value = ''; $('#k-apify-in').value = ''; loadKeys(); }
+}
+$('#k-save').onclick = () => {
+  const body = {}, a = $('#k-anth-in').value.trim(), b = $('#k-apify-in').value.trim();
+  if (a) body.ANTHROPIC_API_KEY = a; if (b) body.APIFY_TOKEN = b;
+  if (!a && !b) return $('#k-msg').innerHTML = '<div class="note">입력한 키가 없습니다.</div>';
+  postKeys(body, '저장했습니다.');
+};
+$('#k-del-anth').onclick = () => postKeys({ANTHROPIC_API_KEY: ''}, 'Anthropic API 키를 삭제했습니다.');
+$('#k-del-apify').onclick = () => postKeys({APIFY_TOKEN: ''}, 'Apify 토큰을 삭제했습니다.');
 
 // ---------- 단계 이동 ----------
 function go(step) {
@@ -560,20 +705,20 @@ $('#to5').onclick = () => { go(3); if (!S.detail.scripts5) $('[data-run="scripts
 function startFetch(idOrUrl, box) {
   api('/api/start', {url: idOrUrl, fit: S.client, cookies: $('#cookies').checked}).then(j => {
     if (j.error) return (box || $('#job-start')).innerHTML = `<div class="note">${esc(j.error)}</div>`;
-    watch(j.job, box || $('#job-start'), '레퍼런스 가져오는 중', async ok => { await loadRefs(); if (ok) openRef(j.ref); });
+    watch(j.job, box || $('#job-start'), '레퍼런스 가져오기', async ok => { await loadRefs(); if (ok) openRef(j.ref); });
   });
 }
 $('#start').onclick = () => { const u = $('#url').value.trim(); if (u) startFetch(u); };
 $('#url').addEventListener('keydown', e => { if (e.key === 'Enter') $('#start').click(); });
 $('#collect').onclick = () => api('/api/collect', {fit: S.client, region: $('#f-region').value}).then(j =>
-  watch(j.job, $('#job-collect'), S.client ? '유튜브 레퍼런스 수집 중 (채널 하나는 몇 분 걸립니다)' : '유튜브 레퍼런스 수집 중 (전체 채널은 20분 이상 걸립니다)', loadRefs));
+  watch(j.job, $('#job-collect'), S.client ? `${S.brands[S.client] || S.client} 유튜브 레퍼런스 수집` : '전체 채널 유튜브 레퍼런스 수집', loadRefs));
 
 $$('[data-run]').forEach(b => b.onclick = () => {
   const step = b.dataset.run, id = S.cur; if (!id) return;
   b.disabled = true;
   api('/api/step', {id, step, fit: $('#fit3').value || S.client}).then(j => {
     if (j.error) { b.disabled = false; return $('#job-'+step).innerHTML = `<div class="note">${esc(j.error)}</div>`; }
-    watch(j.job, $('#job-'+step), b.textContent + ' — Claude Code 실행 중', async () => { b.disabled = false; await loadRefs(); if (S.cur === id) openRef(id, true); });
+    watch(j.job, $('#job-'+step), b.textContent.replace('다시 ', ''), async () => { b.disabled = false; await loadRefs(); if (S.cur === id) openRef(id, true); });
   });
 });
 $('#fit3').onchange = () => S.cur && $('#fit3').value && api('/api/set', {id:S.cur, fit:$('#fit3').value}).then(loadRefs);

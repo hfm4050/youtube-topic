@@ -34,6 +34,9 @@ python app/server.py        # http://localhost:5180  (윈도우: start-dashboard
 - 우측 상단 「고객 채널」을 고르면 보관함·수집·주간 리서치가 그 채널 기준으로 바뀐다(`reels/config.json` 의 channels — 건강한마케팅(열정덕) 포함). 보관함은 유튜브/인스타그램/틱톡 탭으로 나뉜다.
 - 「화면·대본 분석」은 첫 3초 대사 · 대본 구조 · 화면 분석 · 원문·번역 · 반응 인사이트 5개 탭. 분석 실행 시 `analysis.md` 와 함께 `analysis.json`(`app/analysis_schema.md`)을 만든다.
 - 「인스타그램」 탭의 가져오기 패널: ① 고객 채널별 계정·해시태그 저장 후 Apify 로 자동 수집(토큰은 화면에서 입력 → `.env`, 커밋 금지) ② 릴스 링크 여러 개 붙여넣기(토큰 불필요, 30개까지). 「틱톡」 탭은 링크 붙여넣기.
+- 「API 키 설정」(우측 상단): Anthropic API 키(분석용, CLI 로그인이 없을 때)와 Apify 토큰을 등록한다 → `.env`(커밋 금지).
+- 「수집 키워드」: 고객 채널별 국내·해외 키워드를 추천(`app/keyword_suggestions.json`)에서 더하거나 직접 입력·삭제 후 저장 → `reels/config.json`.
+- 모든 작업은 단계 표시·진행 막대·경과/남은 시간(분·초)을 보여 준다. 예상 시간은 `reels/data/job_stats.json` 의 최근 실제 소요 시간으로 보정된다.
 - 「주간 주제 리서치」 탭: `work/out/cand_*.json` 후보와 확정 CSV를 표로 본다.
 - 설치: `pip install "yt-dlp[default,curl-cffi]"` (틱톡은 curl-cffi 필요) + ffmpeg.
 
