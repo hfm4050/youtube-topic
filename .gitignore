@@ -1,0 +1,11 @@
+# 실행 산출물·개인 데이터 (커밋 금지)
+work/out/*
+!work/out/.gitkeep
+reels/data/*
+!reels/data/.gitkeep
+reels/out/*
+!reels/out/.gitkeep
+.env
+cookies.txt
+__pycache__/
+*.pyc

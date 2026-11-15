@@ -1,0 +1,35 @@
+{
+  "_설명": "레퍼런스 수집·판정 설정. 계정·키워드는 자유롭게 고친다. instagram.accounts 는 직접 본 계정만 넣는다(검증 안 된 핸들을 지어내지 말 것).",
+  "thresholds": {
+    "min_engagement": 0.005,
+    "min_outlier": 5.0,
+    "min_views_for_outlier": {"KR": 10000, "GLOBAL": 50000},
+    "big_views": {"KR": 300000, "GLOBAL": 1000000},
+    "carousel_auto": {"min_outlier": 10.0, "min_comments": 100}
+  },
+  "youtube": {
+    "period_sp": {"week": "CAMSBAgDEAE%3D", "month": "CAMSBAgEEAE%3D"},
+    "per_query": 12,
+    "detail_top": 5,
+    "channel_sample": 30
+  },
+  "channels": {
+    "유이선생":   {"brand": "유이성형외과",   "accent": "#B8674A", "law": "의료광고법", "kr": ["40대 리프팅 쇼츠", "보톡스 필러 상담 50대"], "global": ["facelift over 50 surgeon explains", "botox filler mistakes doctor shorts"]},
+    "스타라인":   {"brand": "스타라인성형외과", "accent": "#3F5C7A", "law": "의료광고법", "kr": ["안면거상 회복 후기", "상안검 하안검 눈밑지방재배치 원장"], "global": ["deep plane facelift surgeon", "upper blepharoplasty recovery surgeon"], "ban": ["광대", "사각턱", "윤곽", "양악", "턱끝"]},
+    "성장인":     {"brand": "강남여성병원",   "accent": "#A14E6B", "law": "의료광고법", "kr": ["갱년기 증상 산부인과 쇼츠", "폐경 호르몬치료 의사"], "global": ["menopause doctor shorts", "perimenopause symptoms gynecologist"]},
+    "코스모어":   {"brand": "코스모어플러스", "accent": "#5E7F5A", "law": "화장품법",   "kr": ["50대 스킨케어 루틴", "화장품 성분 비교 쇼츠"], "global": ["skincare over 50 dermatologist shorts", "skincare ingredient explained shorts"]},
+    "홍성옥교수": {"brand": "홍성옥교수",     "accent": "#2F4858", "law": "의료광고법", "kr": ["사랑니 발치 구강외과 쇼츠", "양악수술 교수 설명"], "global": ["oral surgeon day in the life", "wisdom teeth removal surgeon explains"], "instagram_refs_from_doc": ["fifteenblades", "doctorzoya", "doctor.mike", "drkaranrajan"]},
+    "킴스히어링": {"brand": "킴스히어링",     "accent": "#7A5C2E", "law": "의료기기법", "kr": ["부모님 보청기 쇼츠", "난청 신호 자가진단"], "global": ["hearing aids audiologist shorts", "signs of hearing loss parents"]},
+    "손해사정사": {"brand": "손해사정사 박신성", "accent": "#374785", "law": "보험(개별 약관)", "kr": ["보험금 거절 손해사정사", "실손보험 청구 쇼츠"], "global": ["insurance claim denied adjuster explains"]},
+    "마리안나":   {"brand": "마리안나병원",   "accent": "#6B5B73", "law": "의료광고법·환우 동의", "kr": ["호스피스 보호자 브이로그", "임종 준비 가족"], "global": ["hospice nurse shorts", "end of life care family"]},
+    "판교":       {"brand": "판교 사랑의병원", "accent": "#2E6F6A", "law": "의료광고법", "kr": ["건강검진 결과 내과 의사 쇼츠", "직장인 증상 내과"], "global": ["doctor explains blood test results shorts"]}
+  },
+  "hot_any_field": {"kr": ["쇼츠 조회수 폭발 이번주"], "global": ["viral shorts this week"]},
+  "instagram": {
+    "actor_reels": "apify~instagram-reel-scraper",
+    "actor_hashtag": "apify~instagram-hashtag-scraper",
+    "results_per_account": 15,
+    "accounts": {"GLOBAL": [], "KR": []},
+    "hashtags": {"GLOBAL": [], "KR": []}
+  }
+}
