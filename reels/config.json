@@ -174,8 +174,12 @@
           "KR": []
         },
         "hashtags": {
-          "GLOBAL": [],
-          "KR": []
+          "GLOBAL": [
+            "ai"
+          ],
+          "KR": [
+            "마케팅"
+          ]
         }
       }
     }
@@ -197,8 +201,19 @@
       "KR": []
     },
     "hashtags": {
-      "GLOBAL": [],
-      "KR": []
+      "GLOBAL": [
+        "aimarketing",
+        "ai",
+        "marketing",
+        "aeo",
+        "geo"
+      ],
+      "KR": [
+        "마케팅",
+        "ai",
+        "aeo",
+        "geo"
+      ]
     }
   }
 }

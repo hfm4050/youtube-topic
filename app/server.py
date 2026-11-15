@@ -115,6 +115,72 @@ def load_refs():
                 r.update(flags(r['id']))
                 refs.append(r)
     refs.sort(key=lambda r: (r.get('outlier') or 0), reverse=True)
+    return add_signals(refs)
+
+
+THUMBS = os.path.join(REELS, 'data', 'thumbs')   # 인스타·틱톡 썸네일 보관(원본 주소는 몇 시간 뒤 만료된다)
+_thumb_lock = threading.Lock()
+
+
+def thumb_path(rid):
+    """썸네일 파일 경로를 돌려준다. 없으면 한 번 받아 둔다(실패하면 1시간 동안 다시 시도하지 않는다)."""
+    p, miss = os.path.join(THUMBS, rid + '.jpg'), os.path.join(THUMBS, rid + '.none')
+    if os.path.exists(p):
+        return p
+    if os.path.exists(miss) and time.time() - os.path.getmtime(miss) < 3600:
+        return None
+    os.makedirs(THUMBS, exist_ok=True)
+    ref = next((r for r in load_refs() if r['id'] == rid), None)
+    if not ref:
+        return None
+
+    def grab(url):
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36'})
+        data = urllib.request.urlopen(req, timeout=20).read()
+        if len(data) < 500:
+            raise ValueError('빈 이미지')
+        open(p, 'wb').write(data)
+
+    with _thumb_lock:                       # 동시에 수십 장을 받지 않도록 한 장씩
+        if os.path.exists(p):
+            return p
+        for attempt in ('stored', 'fresh'):
+            try:
+                url = ref.get('thumb')
+                if attempt == 'fresh':      # 저장된 주소가 만료됐거나 없으면 yt-dlp 로 새 주소를 얻는다
+                    r = subprocess.run(py('-m', 'yt_dlp', '--skip-download', '--no-warnings', '--print', 'thumbnail', ref['url']),
+                                       capture_output=True, text=True, timeout=60, env=ENV, encoding='utf-8', errors='replace')
+                    url = (r.stdout or '').strip().splitlines()[-1] if r.returncode == 0 and r.stdout.strip() else None
+                if url and url.startswith('http'):
+                    grab(url)
+                    return p
+            except Exception:
+                pass
+        open(miss, 'w').close()
+    return None
+
+
+def add_signals(refs):
+    """평소 대비 급등 표시용 값. views_x = 수집 때 계산한 배수(outlier), comment_x = 같은 플랫폼 보관함 중앙값 대비 댓글 비율 배수."""
+    group = lambda r: 'youtube' if r.get('platform', '').startswith('youtube') else r.get('platform')
+    rate = lambda r: (r['comments'] / r['views']) if r.get('views') and r['views'] >= 1000 and r.get('comments') is not None else None
+    by = {}
+    for r in refs:
+        if rate(r) is not None:
+            by.setdefault(group(r), []).append(rate(r))
+    med = {g: sorted(v)[len(v) // 2] for g, v in by.items() if len(v) >= 8}
+    vby = {}
+    for r in refs:
+        if r.get('views'):
+            vby.setdefault(group(r), []).append(r['views'])
+    vmed = {g: sorted(v)[len(v) // 2] for g, v in vby.items() if len(v) >= 8}
+    for r in refs:
+        m, x = med.get(group(r)), rate(r)
+        r['comment_x'] = round(x / m, 1) if m and x is not None and (r.get('comments') or 0) >= 50 else None
+        # 계정의 평소 조회수를 모르는 항목(outlier 없음)은 같은 플랫폼 보관함 중앙값 대비 배수를 따로 둔다
+        vm = vmed.get(group(r))
+        r['views_x'] = round(r['views'] / vm, 1) if r.get('outlier') is None and vm and r.get('views') else None
+        r['has_thumb'] = bool(r.get('thumb')) or os.path.exists(os.path.join(THUMBS, r['id'] + '.jpg'))
     return refs
 
 
@@ -403,6 +469,18 @@ class H(BaseHTTPRequestHandler):
                 aj = None
             return self.send(200, {'id': rid, 'ref': ref, 'meta': meta, 'transcript': tr, 'frames': frames, 'analysis_json': aj,
                                    **{k: read(os.path.join(d, f)) for k, f in STEP_FILE.items()}})
+        m = re.fullmatch(r'/thumb/([\w-]+)', path)
+        if m and safe_id(m.group(1)):
+            tp = thumb_path(m.group(1))
+            if tp:
+                body = open(tp, 'rb').read()
+                self.send_response(200)
+                self.send_header('Content-Type', 'image/jpeg')
+                self.send_header('Content-Length', str(len(body)))
+                self.send_header('Cache-Control', 'max-age=86400')
+                self.end_headers()
+                return self.wfile.write(body)
+            return self.send(404, {'error': 'no thumbnail'})
         m = re.fullmatch(r'/frames/([\w-]+)/([\w.]+\.jpg)', path)
         if m and safe_id(m.group(1)):
             p = os.path.join(ANA, m.group(1), 'frames', m.group(2))

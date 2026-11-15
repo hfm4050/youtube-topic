@@ -41,7 +41,7 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--ac);outlin
 .btn.sm{padding:7px 12px;font-size:13px}
 .btn:disabled{opacity:.5;cursor:default}
 .hint{font-size:12.5px;color:var(--sub);margin-top:8px}
-.filters{display:grid;grid-template-columns:minmax(0,1fr) 160px 170px 140px;gap:14px;align-items:end}
+.filters{display:grid;grid-template-columns:minmax(0,1fr) 150px 160px 130px 170px;gap:14px;align-items:end}
 .filters label.l{margin-top:0}
 .filters input,.filters select{width:100%}
 .secthead{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px;gap:12px;flex-wrap:wrap}
@@ -60,6 +60,9 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--ac);outlin
 .th .ph{display:grid;place-items:center;height:100%;color:var(--sub);font-weight:700;font-size:13px}
 .badge{position:absolute;top:8px;font-size:12px;font-weight:800;padding:2px 8px;border-radius:6px;color:#fff;font-variant-numeric:tabular-nums}
 .badge.x{left:8px;background:#111c}.badge.c{right:8px;background:var(--ac)}
+.hots{position:absolute;left:8px;top:8px;display:flex;flex-direction:column;gap:5px;align-items:flex-start}
+.hot{font-size:12.5px;font-weight:800;padding:3px 9px;border-radius:7px;color:#fff;font-variant-numeric:tabular-nums;box-shadow:0 1px 4px #0005}
+.hot.v{background:#14171C}.hot.c{background:#C2410C}
 .ref .b{padding:12px 14px 14px;display:flex;flex-direction:column;gap:4px;flex:1}
 .ref .k{font-size:12px;color:var(--sub)}
 .ref .t{font-weight:700;font-size:14.5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.9em}
@@ -87,10 +90,13 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--ac);outlin
 .atabs button[aria-selected=true]{color:var(--ac);border-color:var(--ac)}
 .cap{font-size:12.5px;color:var(--sub);margin-bottom:6px}
 .hooktext{font-size:22px;font-weight:700;line-height:1.45;letter-spacing:-.01em;max-width:760px;margin:4px 0 16px}
-.hf{display:flex;gap:10px;flex-wrap:wrap}
-.hf figure{margin:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#F1F4F8;width:112px}
-.hf img{width:100%;aspect-ratio:9/15;object-fit:contain;background:#0F1217;display:block}
-.hf figcaption{font-size:12px;text-align:center;padding:4px;color:var(--sub);font-variant-numeric:tabular-nums}
+.hf{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.hf figure{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#0F1217}
+.hf a{display:block;cursor:zoom-in}
+.hf img{width:100%;height:auto;display:block}
+.hf figcaption{font-size:13px;font-weight:700;text-align:center;padding:7px;color:var(--ink);background:var(--card);font-variant-numeric:tabular-nums}
+.hf.wide{grid-template-columns:repeat(2,minmax(0,1fr))}
+.big a{display:block;cursor:zoom-in}
 .kv{display:grid;grid-template-columns:120px 1fr;gap:8px 14px;margin:6px 0;font-size:14px}
 .kv dt{color:var(--sub)}.kv dd{margin:0;font-weight:700}
 .sec{border-top:1px solid var(--line);margin-top:18px;padding-top:16px}
@@ -195,7 +201,7 @@ dialog::backdrop{background:#10141c88}
 .pcost{margin-top:10px;font-size:13px;background:#F1F4F8;border-radius:8px;padding:8px 12px}
 .pcost b{font-variant-numeric:tabular-nums}
 [hidden]{display:none!important}
-@media(max-width:820px){.filters{grid-template-columns:1fr 1fr}.igrid{grid-template-columns:1fr}.steps .lb{display:none}.refhead{grid-template-columns:1fr}.refhead .th{max-width:140px}.tl{grid-template-columns:1fr}.tl .hd.ko{display:none}.tl .cell.ko{padding-top:0}.hooktext{font-size:18px}}
+@media(max-width:820px){.filters{grid-template-columns:1fr 1fr}.igrid{grid-template-columns:1fr}.steps .lb{display:none}.refhead{grid-template-columns:1fr}.refhead .th{max-width:140px}.tl{grid-template-columns:1fr}.tl .hd.ko{display:none}.tl .cell.ko{padding-top:0}.hooktext{font-size:18px}.hf{grid-template-columns:repeat(2,minmax(0,1fr))}.hf.wide{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -251,6 +257,7 @@ dialog::backdrop{background:#10141c88}
           <div><label class="l" for="f-region">국가</label><select id="f-region"><option value="">국내·해외 전체</option><option value="KR">국내</option><option value="GLOBAL">해외</option></select></div>
           <div><label class="l" for="f-source">수집 경로</label><select id="f-source"><option value="">모든 수집 경로</option><option value="키워드">키워드 검색</option><option value="계정">지정 계정</option><option value="해시태그">해시태그</option><option value="직접 추가">링크 직접 추가</option></select></div>
           <div><label class="l" for="f-form">형식</label><select id="f-form"><option value="">숏폼·롱폼</option><option value="short">숏폼만</option><option value="long">롱폼만</option></select></div>
+          <div><label class="l" for="f-hot">급등</label><select id="f-hot"><option value="">전체</option><option value="any">조회·댓글 급등만</option><option value="v">조회 급등 (5배↑)</option><option value="c">댓글 급등 (3배↑)</option></select></div>
         </div>
         <div class="tabs" id="status-tabs"></div>
         <div class="kw" id="kw"></div>
@@ -403,8 +410,22 @@ let S = {refs:[], channels:[], brands:{}, keywords:{}, statuses:[], status:'검�
 const frameSec = f => { const n = parseInt(f.slice(2), 10); return f[0] === 'f' ? n - 1 : 3 + (n - 1) * 2; };
 const mmss = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;
 function thumb(r) {
-  if (r.frame0) return `/frames/${r.id}/${r.frame0}`;
-  return (r.platform === 'youtube' || r.platform === 'youtube_shorts') && r.thumb ? r.thumb : null;
+  if (r.platform === 'youtube' || r.platform === 'youtube_shorts') return r.thumb || (r.frame0 ? `/frames/${r.id}/${r.frame0}` : null);
+  return `/thumb/${r.id}`;          // 인스타·틱톡: 서버가 한 번 받아 보관한 미리보기 (없으면 첫 화면 캡처)
+}
+function thumbImg(r) {
+  const t = thumb(r), ph = `<div class=&quot;ph&quot;>${PLAT[r.platform]||''} 미리보기 없음</div>`;
+  const fb = r.frame0 ? `this.onerror=null;this.src='/frames/${r.id}/${r.frame0}'` : `this.outerHTML='${ph}'`;
+  return t ? `<img loading="lazy" src="${esc(t)}" alt="" onerror="${fb}">` : `<div class="ph">${PLAT[r.platform]||''} 미리보기 없음</div>`;
+}
+// 평소 대비 급등 표시: 조회 5배 이상, 댓글 비율 3배 이상
+const HOT_VIEWS = 5, HOT_COMMENTS = 3;
+function hotBadges(r) {
+  let h = '';
+  if (r.outlier >= HOT_VIEWS) h += `<span class="hot v" title="${esc(r.outlier_basis || '평소')} 대비 조회수 ${r.outlier}배">평소 ${r.outlier}배</span>`;
+  else if (r.views_x >= HOT_VIEWS) h += `<span class="hot v" title="계정의 평소 조회수를 알 수 없어, 같은 플랫폼 보관함 중앙값 대비 조회수 ${r.views_x}배로 표시">조회 ${r.views_x}배</span>`;
+  if (r.comment_x >= HOT_COMMENTS) h += `<span class="hot c" title="같은 플랫폼 보관함 중앙값 대비 조회수당 댓글 ${r.comment_x}배">댓글 ${r.comment_x}배</span>`;
+  return h ? `<div class="hots">${h}</div>` : '';
 }
 function roleTag(role) {
   const c = /행동/.test(role||'') ? 'cta' : /후킹/.test(role||'') ? '' : 'body';
@@ -428,9 +449,10 @@ async function loadRefs() {
   renderGrid();
 }
 function renderGrid() {
-  const q = $('#q').value.trim().toLowerCase(), rg = $('#f-region').value, src = $('#f-source').value, form = $('#f-form').value, cl = S.client;
+  const q = $('#q').value.trim().toLowerCase(), rg = $('#f-region').value, src = $('#f-source').value, form = $('#f-form').value, hot = $('#f-hot').value, cl = S.client;
+  const isHot = r => { const v = r.outlier >= HOT_VIEWS || r.views_x >= HOT_VIEWS, c = r.comment_x >= HOT_COMMENTS; return hot === 'v' ? v : hot === 'c' ? c : v || c; };
   const mine = S.refs.filter(r => !cl || r.fit === cl);
-  const base0 = mine.filter(r => (!rg || r.region === rg) && (!src || (r.source||'').startsWith(src)) && (!form || (form === 'short') === !!isShort(r))
+  const base0 = mine.filter(r => (!rg || r.region === rg) && (!src || (r.source||'').startsWith(src)) && (!form || (form === 'short') === !!isShort(r)) && (!hot || isHot(r))
     && (!q || [r.title, r.topic_ko, r.author, r.url, r.note, r.source].some(v => (v||'').toLowerCase().includes(q))));
   const pc = p => base0.filter(r => PGROUP(r) === p).length;
   $('#plat').innerHTML = [['', '전체', base0.length], ['youtube', '유튜브', pc('youtube')], ['instagram', '인스타그램', pc('instagram')], ['tiktok', '틱톡', pc('tiktok')]]
@@ -451,10 +473,9 @@ function renderGrid() {
   const emptyMsg = !mine.length ? `${cl ? esc(S.brands[cl]||cl) + ' 채널의 수집분이 아직 없습니다.' : '보관함이 비어 있습니다.'} 위에 링크를 넣거나 「유튜브 새로 수집」을 눌러 주세요.`
     : S.plat && !pc(S.plat) ? `${pname} 수집분이 없습니다. 위 입력란에 ${pname} 링크를 넣어 추가해 주세요.` : '조건에 맞는 레퍼런스가 없습니다. 상태 탭을 「전체」로 바꿔 보세요.';
   $('#grid').innerHTML = rows.length ? rows.map(r => {
-    const t = thumb(r);
     return `<article class="ref">
-      <div class="th">${t ? `<img loading="lazy" src="${esc(t)}" alt="">` : `<div class="ph">${PLAT[r.platform]||''} 미리보기 없음</div>`}
-        ${r.outlier ? `<span class="badge x">평소 ${r.outlier}배</span>` : ''}${r.carousel_candidate ? '<span class="badge c">캐러셀 후보</span>' : ''}</div>
+      <div class="th">${thumbImg(r)}
+        ${hotBadges(r)}${r.carousel_candidate ? '<span class="badge c">캐러셀 후보</span>' : ''}</div>
       <div class="b"><div class="k">${r.region === 'GLOBAL' ? '해외' : '국내'} · ${PLAT[r.platform]||''} · ${esc((r.source||'').split(':')[0] || '수집')}${cl ? '' : ' · ' + esc(S.brands[r.fit] || r.fit || '채널 미정')}</div>
         <div class="t">${esc(r.topic_ko || r.title || r.id)}</div>
         <div class="a">@${esc(r.author||'—')}</div>
@@ -466,7 +487,7 @@ function renderGrid() {
   }).join('') : `<div class="empty">${emptyMsg}</div>`;
   $$('#grid .go').forEach(b => b.onclick = () => openRef(b.dataset.id));
 }
-['q','f-region','f-source','f-form'].forEach(id => $('#'+id).addEventListener('input', renderGrid));
+['q','f-region','f-source','f-form','f-hot'].forEach(id => $('#'+id).addEventListener('input', renderGrid));
 
 // ---------- 채널별 수집 키워드 (추천 · 추가 · 삭제 · 저장) ----------
 function renderKw() {
@@ -664,8 +685,9 @@ function mdSections(t) {            // analysis.json 이 없을 때: analysis.md
 }
 function figs(list, id, cls) {
   const have = new Set(S.detail.frames);
-  return `<div class="${cls}">` + list.filter(f => have.has(f.file)).map(f =>
-    `<figure><img loading="lazy" src="/frames/${id}/${f.file}" alt=""><figcaption>${cls === 'big' ? `<time>${mmss(f.sec ?? frameSec(f.file))}</time>${esc(f.desc||'')}` : `${f.sec ?? frameSec(f.file)}초`}</figcaption></figure>`).join('') + '</div>';
+  const wide = cls === 'hf' && (S.detail.meta || {}).wide;
+  return `<div class="${cls}${wide ? ' wide' : ''}">` + list.filter(f => have.has(f.file)).map(f =>
+    `<figure><a href="/frames/${id}/${f.file}" target="_blank" rel="noopener" title="원본 크기로 보기"><img loading="lazy" src="/frames/${id}/${f.file}" alt="" onload="if(this.naturalWidth>this.naturalHeight*1.2)this.closest('.hf')&&this.closest('.hf').classList.add('wide')"></a><figcaption>${cls === 'big' ? `<time>${mmss(f.sec ?? frameSec(f.file))}</time>${esc(f.desc||'')}` : `${f.sec ?? frameSec(f.file)}초`}</figcaption></figure>`).join('') + '</div>';
 }
 function renderAnalysis() {
   const d = S.detail, id = d.id, A = d.analysis_json, m = d.meta || {}, box = $('#apane'), tab = S.atab;
@@ -691,7 +713,7 @@ function renderAnalysis() {
     <div class="cap">0–3초 · ${esc(H.source || '원문')}</div>
     <div class="hooktext">${esc(H.text || '(대사 없음)')}</div>
     ${figs(hookFrames, id, 'hf')}
-    <div class="cap" style="margin-top:6px">추출 화면 · 실제 영상에서 캡처</div>
+    <div class="cap" style="margin-top:8px">추출 화면 · 실제 영상에서 캡처 · 누르면 원본 크기로 열립니다</div>
     <div class="sec"><div class="h">가져올 문장 형태 <small>AI 분석</small></div>
       <dl class="kv"><dt>후킹 방식</dt><dd>${esc(H.type||'—')}</dd><dt>이어지는 전개</dt><dd>${esc(H.flow||'—')}</dd></dl></div>
     <details open><summary>한국어 번역 · 후킹 해석 자세히</summary><div>${H.ko ? `<p><b>${esc(H.ko)}</b></p>` : ''}<p>${esc(H.interpretation||'')}</p></div></details>
