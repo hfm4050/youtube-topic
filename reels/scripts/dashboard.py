@@ -9,7 +9,7 @@ refs = [json.loads(l) for l in open(db, encoding='utf-8') if l.strip()] if os.pa
 refs.sort(key=lambda r: r.get('outlier') or 0, reverse=True)
 e = lambda s: html.escape(str(s if s is not None else ''))
 num = lambda n: '—' if n is None else (f'{n/10000:.0f}만' if n >= 10000 else f'{n:,}')
-PLAT = {'youtube': '유튜브', 'youtube_shorts': '쇼츠', 'instagram': '릴스'}
+PLAT = {'youtube': '유튜브', 'youtube_shorts': '쇼츠', 'instagram': '릴스', 'tiktok': '틱톡'}
 def card(r):
     done = os.path.exists(os.path.join(ROOT, 'data', 'analysis', r['id'], 'analysis.md'))
     th = f'<img loading="lazy" src="{e(r["thumb"])}" alt="">' if r.get('thumb') and r['platform'] != 'instagram' else '<div class="ph">릴스</div>'

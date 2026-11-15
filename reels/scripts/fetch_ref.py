@@ -11,7 +11,7 @@
   frames/          --frames 일 때: 첫 3초는 1초마다(f_000.jpg…), 이후 2초마다 최대 40장
 
 필요: yt-dlp, (frames) ffmpeg, (--whisper) pip install faster-whisper
-인스타는 공개 릴스만. 로그인 벽에 막히면 --cookies-from-browser chrome 을 붙인다(본인 브라우저 로그인 사용).
+틱톡은 /video/<숫자> 링크(쿠키 불필요). 인스타는 공개 릴스만. 로그인 벽에 막히면 --cookies-from-browser chrome 을 붙인다(본인 브라우저 로그인 사용).
 """
 import argparse, glob, json, os, re, subprocess, sys
 
@@ -27,18 +27,32 @@ if not url.startswith('http'):
     refs = {json.loads(l)['id']: json.loads(l) for l in open(db, encoding='utf-8') if l.strip()}
     url = refs[a.ref]['url']
 m = re.search(r'(?:v=|shorts/|youtu\.be/)([\w-]{11})', url)
-rid = f'yt_{m.group(1)}' if m else 'ig_' + re.search(r'/(?:reels?|p)/([\w-]+)', url).group(1)
+t = re.search(r'tiktok\.com/.*?/video/(\d+)', url)
+rid = f'yt_{m.group(1)}' if m else (f'tt_{t.group(1)}' if t else 'ig_' + re.search(r'/(?:reels?|p)/([\w-]+)', url).group(1))
 OUT = os.path.join(ROOT, 'data', 'analysis', rid); os.makedirs(OUT, exist_ok=True)
 
 import yt_dlp
 base = {'quiet': True, 'no_warnings': True}
 if a.cookies_from_browser: base['cookiesfrombrowser'] = (a.cookies_from_browser,)
 need_media = a.frames or a.whisper
-opts = {**base, 'skip_download': not need_media, 'writesubtitles': True, 'writeautomaticsub': True,
-        'subtitleslangs': ['ko', 'en', 'en-orig', 'ko-orig'], 'subtitlesformat': 'json3',
-        'outtmpl': os.path.join(OUT, 'media.%(ext)s'), 'format': 'best[height<=720]/best', 'ignoreerrors': False}
+opts = {**base, 'skip_download': not need_media, 'outtmpl': os.path.join(OUT, 'media.%(ext)s'),
+        'format': 'bv*[height<=720]+ba/b[height<=720]/b', 'merge_output_format': 'mp4', 'ignoreerrors': False}
 with yt_dlp.YoutubeDL(opts) as y:
     info = y.extract_info(url, download=True)
+
+# 자막은 따로 받는다 — 실패(429 등)해도 영상·화면은 살린다. 원어 자막을 먼저, 자동 번역 자막은 요청하지 않는다.
+lang = (info.get('language') or '').split('-')[0]
+have = set(info.get('subtitles') or {}) | set(info.get('automatic_captions') or {})
+want = [l for l in ([f'{lang}-orig', lang] if lang else []) + ['ko-orig', 'en-orig', 'ko', 'en'] if l in have]
+for l in list(dict.fromkeys(want))[:2]:
+    try:
+        with yt_dlp.YoutubeDL({**base, 'skip_download': True, 'writesubtitles': True, 'writeautomaticsub': True,
+                               'subtitleslangs': [l], 'subtitlesformat': 'json3', 'sleep_interval_subtitles': 1,
+                               'outtmpl': os.path.join(OUT, 'media.%(ext)s')}) as y:
+            y.extract_info(url, download=True)
+        if glob.glob(os.path.join(OUT, 'media.*.json3')): break
+    except Exception as e:
+        print(f'! 자막({l}) 받기 실패: {str(e)[:120]}', file=sys.stderr)
 
 up = info.get('upload_date')
 meta = {'id': rid, 'url': url, 'title': info.get('title'), 'description': (info.get('description') or '')[:1500],

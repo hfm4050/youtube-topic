@@ -45,3 +45,4 @@
 - 아침 자동 실행 프롬프트: `prompts/daily_refs.md`. 수동 시작 프롬프트: `KICKOFF_REELS.md`.
 - 설치: `pip install yt-dlp playwright && playwright install chromium`, ffmpeg, (선택) `pip install faster-whisper`.
 - 화요일 리포트와의 연결: 검수대기·촬영대기 레퍼런스는 리서치 단계에서 `work/out/research_common.md`에 "이번 주 레퍼런스 훅"으로 넣어 후보 근거(벤치마크 근거 열)에 쓴다. 월요일 핫 주제(전 분야 300만+)와 달리 여기는 **우리 채널 분야 키워드·계정** 중심이다.
+- 대시보드: `python app/server.py` → http://localhost:5180 (`app/index.html` 단일 화면, 표준 라이브러리 서버). 링크(인스타·틱톡·유튜브) → `collect.py add` + `fetch_ref.py --frames`, 분석·대본·기획은 `claude -p` 로 ref-analyze 스킬의 ②③④를 각각 실행해 `reels/data/analysis/<id>/*.md` 를 만든다. id 접두사: `yt_`·`ig_`·`tt_`.

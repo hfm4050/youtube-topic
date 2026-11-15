@@ -23,6 +23,17 @@ Claude Code 안에서 `/ref-collect`(주제 찾기) · `/ref-analyze <링크>`(�
 - 아침 7시 자동 실행(맥/리눅스 cron 예): `0 7 * * * cd /경로/youtube-topic-kit && claude -p "$(cat prompts/daily_refs.md)" --permission-mode acceptEdits >> reels/out/cron.log 2>&1` — 수집 → 캐러셀 후보 최대 5개 제작 → `reels/out/daily_날짜.md` 요약. 업로드는 하지 않는다(음원은 앱에서만, 의료·보험 문구는 사람 검수).
 - 이 세션(클라우드)에서는 유튜브·인스타 접속이 막혀 **수집·다운로드 스크립트는 실제 네트워크로 돌려 보지 못했다**. 판정 로직(selftest)·캐러셀 렌더·보드 생성은 확인했다. 첫 실행 때 `collect.py youtube --fit 손해사정사`처럼 채널 하나로 먼저 돌려 볼 것.
 
+## 2-2. 콘텐츠 스튜디오 대시보드 (2026-11-16 추가 — `app/`)
+레퍼런스 → 화면·대본 분석 → 대본 5개 비교 → 제작 기획 4단계를 웹 화면으로 본다.
+```bash
+python app/server.py        # http://localhost:5180  (윈도우: start-dashboard.bat 더블클릭)
+```
+- 링크 하나로 시작: 인스타 릴스 · 틱톡(단축 링크 포함) · 유튜브 롱폼/쇼츠 URL → 보관함 추가 + 대본·화면 캡처 내려받기.
+- 보관함: `reels/data/refs.jsonl` 수집분을 검색·국가·수집 경로·채널·상태로 거른다. 「유튜브 새로 수집」은 `collect.py youtube` 실행.
+- 분석·대본 5개·제작 기획 버튼은 `claude -p`(Claude Code CLI)를 호출한다 → 터미널에서 `claude` 로그인이 살아 있어야 한다(만료 시 `/login`).
+- 「주간 63개 주제」 탭: `work/out/cand_*.json` 후보와 확정 CSV를 표로 본다.
+- 설치: `pip install "yt-dlp[default,curl-cffi]"` (틱톡은 curl-cffi 필요) + ffmpeg.
+
 ## 3. 폴더
 ```
 CLAUDE.md                      Claude Code가 자동으로 읽는 작업 메모(규칙 요약 + 환경 차이 + 실행 순서)

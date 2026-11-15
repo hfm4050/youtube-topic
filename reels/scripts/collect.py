@@ -6,7 +6,7 @@
 
   python3 reels/scripts/collect.py youtube [--fit 유이선생] [--region KR|GLOBAL] [--period week|month]
   python3 reels/scripts/collect.py instagram            # APIFY_TOKEN 필요, config.json 의 accounts/hashtags
-  python3 reels/scripts/collect.py add <url> [--fit 채널] # 우연히 본 링크 1개 직접 추가
+  python3 reels/scripts/collect.py add <url> [--fit 채널] # 우연히 본 링크 1개 직접 추가 (유튜브·틱톡·인스타)
   python3 reels/scripts/collect.py score                 # 배수·참여율 다시 계산해 상태 갱신
   python3 reels/scripts/collect.py list [--status 검수대기] [--fit 채널] [--region KR]
   python3 reels/scripts/collect.py set <id> --status 촬영대기 [--note "…"]
@@ -157,7 +157,8 @@ def cmd_youtube(a):
             if fit: r['fit'] = fit
             upsert(refs, r)
             x = refs[r['id']]
-            print(f"  {x['status']:<4} {x.get('outlier') or '-':>6}배  {x.get('views') or 0:>10,}  {x['title'][:40]}")
+            print(f"  {x['status']:<4} {x.get('outlier') or '-':>6}배  {x.get('views') or 0:>10,}  {x['title'][:40]}", flush=True)
+    for k, v in load().items(): refs.setdefault(k, v)   # 수집 도중 다른 창에서 추가된 링크 보존
     save(refs); summary(refs)
 
 
@@ -216,6 +217,16 @@ def cmd_instagram(a):
     save(refs); summary(refs)
 
 
+def generic_detail(url):
+    """틱톡 등 yt-dlp 가 읽는 단일 영상의 공개 수치. 못 얻은 값은 None."""
+    i = ydl().extract_info(url, download=False)
+    up = i.get('upload_date')
+    return {'title': (i.get('title') or i.get('description') or '')[:300], 'author': i.get('uploader') or i.get('channel'),
+            'author_followers': i.get('channel_follower_count'), 'views': i.get('view_count'), 'likes': i.get('like_count'),
+            'comments': i.get('comment_count'), 'duration': i.get('duration'),
+            'uploaded': f'{up[:4]}-{up[4:6]}-{up[6:]}' if up else None, 'thumb': i.get('thumbnail')}
+
+
 # ---------------- 수동 추가 / 조회 ----------------
 def cmd_add(a):
     refs = load()
@@ -228,9 +239,18 @@ def cmd_add(a):
             print(f'! 수치 조회 실패({e.__class__.__name__}) — 링크만 저장', file=sys.stderr)
             r = {'id': f'yt_{m.group(1)}', 'platform': 'youtube', 'url': u}
     else:
+        t = re.search(r'tiktok\.com/.*?/video/(\d+)', u)
         m = re.search(r'instagram\.com/(?:reels?|p)/([\w-]+)', u)
-        if not m: sys.exit('유튜브 또는 인스타 /reel/ · /p/ 링크만 지원합니다.')
-        r = {'id': f'ig_{m.group(1)}', 'platform': 'instagram', 'url': u}
+        if t:
+            r = {'id': f'tt_{t.group(1)}', 'platform': 'tiktok', 'url': u}
+            try:
+                r.update(generic_detail(u))
+            except Exception as e:
+                print(f'! 수치 조회 실패({e.__class__.__name__}) — 링크만 저장', file=sys.stderr)
+        elif m:
+            r = {'id': f'ig_{m.group(1)}', 'platform': 'instagram', 'url': u}
+        else:
+            sys.exit('유튜브 · 틱톡(/video/) · 인스타 /reel/ · /p/ 링크만 지원합니다.')
     r.update(region=a.region or 'GLOBAL', source='직접 추가')
     if a.fit: r['fit'] = a.fit
     upsert(refs, r)

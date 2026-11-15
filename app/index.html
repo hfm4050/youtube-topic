@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>콘텐츠 스튜디오</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<style>
+:root{--bg:#F5F6F8;--card:#fff;--ink:#14171C;--sub:#667080;--line:#E3E7ED;--ac:#2F5BD3;--ac-soft:#EAF0FF;--ok:#1E8E5A;--warn:#B4540A;--err:#C0392B}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Pretendard,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
+button,input,select{font:inherit;color:inherit}
+.wrap{max-width:1280px;margin:auto;padding:22px 24px 80px}
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}
+h1{font-size:24px;margin:0 0 2px;letter-spacing:-.02em}
+.sub{color:var(--sub);font-size:13px}
+.modes{display:flex;gap:6px}
+.modes button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;color:var(--sub);cursor:pointer}
+.modes button[aria-pressed=true]{background:var(--ac-soft);border-color:var(--ac);color:var(--ac)}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line);margin-bottom:18px}
+.steps button{border:0;background:none;padding:12px 8px;display:flex;align-items:center;justify-content:center;gap:9px;color:var(--sub);font-weight:600;font-size:14px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.steps button .n{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:12.5px;background:var(--card)}
+.steps button[aria-selected=true]{color:var(--ac);border-color:var(--ac)}
+.steps button[aria-selected=true] .n{background:var(--ac);border-color:var(--ac);color:#fff}
+.steps button.done .n{background:var(--ac-soft);border-color:var(--ac);color:var(--ac)}
+.steps button:disabled{opacity:.45;cursor:default}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin-bottom:22px}
+.card h2{font-size:19px;margin:0 0 4px}
+h3{font-size:18px;margin:0 0 2px}
+label.l{display:block;font-size:12.5px;font-weight:700;margin:16px 0 6px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+input[type=text],input[type=url],select{border:1px solid var(--line);border-radius:10px;padding:11px 13px;background:var(--card);min-width:0}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+.grow{flex:1 1 280px}
+.btn{border:0;border-radius:10px;padding:11px 20px;font-weight:700;background:var(--ac);color:#fff;cursor:pointer;white-space:nowrap}
+.btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.btn.sm{padding:7px 12px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:default}
+.hint{font-size:12.5px;color:var(--sub);margin-top:8px}
+.filters{display:grid;grid-template-columns:minmax(0,1fr) 170px 170px 150px;gap:14px;align-items:end}
+.filters label.l{margin-top:0}
+.filters input,.filters select{width:100%}
+.secthead{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin:14px 0 4px}
+.tabs button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600;color:var(--sub);cursor:pointer}
+.tabs button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-top:16px}
+.ref{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;text-align:left;padding:0}
+.ref:hover{border-color:var(--ac);box-shadow:0 4px 14px #1c2a4d14}
+.th{position:relative;aspect-ratio:4/5;background:#DDE2EA;overflow:hidden}
+.th img{width:100%;height:100%;object-fit:cover;display:block}
+.th .ph{display:grid;place-items:center;height:100%;color:var(--sub);font-weight:700;font-size:13px}
+.badge{position:absolute;top:8px;font-size:12px;font-weight:800;padding:2px 8px;border-radius:6px;color:#fff;font-variant-numeric:tabular-nums}
+.badge.x{left:8px;background:#111c}.badge.c{right:8px;background:var(--ac)}.badge.p{left:8px;bottom:8px;top:auto;background:#111c;font-weight:600}
+.ref .b{padding:10px 12px 12px;display:flex;flex-direction:column;gap:3px}
+.ref .t{font-weight:700;font-size:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ref .m{font-size:12.5px;color:var(--sub)}
+.dots{display:flex;gap:4px;margin-top:4px}
+.dots span{font-size:11px;font-weight:700;padding:1px 6px;border-radius:5px;background:#EEF1F5;color:#98A1AF}
+.dots span.on{background:var(--ac-soft);color:var(--ac)}
+.empty{color:var(--sub);text-align:center;padding:44px 0;grid-column:1/-1}
+.job{border:1px solid var(--line);border-radius:10px;background:#0F1217;color:#D7DCE4;margin-top:14px;overflow:hidden}
+.job .jh{display:flex;justify-content:space-between;padding:8px 12px;font-size:13px;font-weight:700;background:#1A1E26}
+.job pre{margin:0;padding:10px 12px;font:12px/1.5 Consolas,monospace;white-space:pre-wrap;max-height:180px;overflow:auto}
+.st-running{color:#F5C451}.st-done{color:#62D49B}.st-error{color:#FF8577}
+.refhead{display:grid;grid-template-columns:150px 1fr;gap:20px}
+.refhead .th{border-radius:10px;aspect-ratio:9/14}
+.stats{display:flex;gap:22px;flex-wrap:wrap;margin:10px 0}
+.stats div b{display:block;font-size:19px;font-variant-numeric:tabular-nums}
+.stats div span{font-size:12px;color:var(--sub)}
+.frames{display:flex;gap:8px;overflow-x:auto;padding:6px 0 10px}
+.frames figure{margin:0;flex:0 0 auto}
+.frames img{height:210px;border-radius:8px;display:block;border:1px solid var(--line)}
+.frames figcaption{font-size:11.5px;color:var(--sub);text-align:center;margin-top:3px;font-variant-numeric:tabular-nums}
+.tr{max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:13.5px}
+.tr div{display:grid;grid-template-columns:52px 1fr;gap:8px;padding:2px 0}
+.tr time{color:var(--ac);font-variant-numeric:tabular-nums;font-size:12.5px}
+.md{font-size:14.5px;overflow-x:auto}
+.md h1{font-size:20px}.md h2{font-size:17px;margin-top:26px;padding-top:14px;border-top:1px solid var(--line)}.md h3{font-size:15px;margin-top:18px}
+.md table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13px}
+.md th,.md td{border:1px solid var(--line);padding:7px 9px;vertical-align:top;text-align:left}
+.md th{background:#F1F4F8;white-space:nowrap}
+.md code{background:#EEF1F5;padding:1px 5px;border-radius:4px;font-size:.92em}
+.md blockquote{margin:10px 0;padding:6px 14px;border-left:3px solid var(--ac);background:var(--ac-soft);border-radius:0 8px 8px 0}
+.note{background:#FFF6E5;border:1px solid #F3D9A4;color:#6B4A0B;border-radius:10px;padding:10px 14px;font-size:13px;margin-top:12px}
+table.w{border-collapse:collapse;width:100%;font-size:13px}
+table.w th,table.w td{border-bottom:1px solid var(--line);padding:8px 9px;vertical-align:top;text-align:left}
+table.w th{font-size:12px;color:var(--sub);white-space:nowrap;position:sticky;top:0;background:var(--card)}
+.pill{display:inline-block;font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:5px;background:#EEF1F5;color:var(--sub);white-space:nowrap}
+.pill.s{background:#FDEBD9;color:var(--warn)}
+[hidden]{display:none!important}
+@media(max-width:820px){.filters{grid-template-columns:1fr 1fr}.steps button span.lb{display:none}.refhead{grid-template-columns:1fr}.refhead .th{max-width:160px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>다음 콘텐츠 만들기</h1>
+      <div class="sub">레퍼런스에서 구조를 빌리고, 내용은 우리 채널 분야로 새로 씁니다 · 업로드는 사람이 합니다</div>
+    </div>
+    <div class="modes">
+      <button id="mode-studio" aria-pressed="true">레퍼런스 스튜디오</button>
+      <button id="mode-weekly" aria-pressed="false">주간 63개 주제</button>
+    </div>
+  </header>
+
+  <!-- ================= 레퍼런스 스튜디오 ================= -->
+  <section id="studio">
+    <nav class="steps" role="tablist">
+      <button role="tab" data-step="1" aria-selected="true"><span class="n">1</span><span class="lb">레퍼런스</span></button>
+      <button role="tab" data-step="2" disabled><span class="n">2</span><span class="lb">화면·대본 분석</span></button>
+      <button role="tab" data-step="3" disabled><span class="n">3</span><span class="lb">대본 5개 비교</span></button>
+      <button role="tab" data-step="4" disabled><span class="n">4</span><span class="lb">제작 기획</span></button>
+    </nav>
+
+    <!-- 1 레퍼런스 -->
+    <div data-pane="1">
+      <div class="card">
+        <h2>링크 하나로 시작하세요</h2>
+        <div class="sub">레퍼런스의 원본 영상과 대본을 가져와 분석 · 새 대본 · 제작 기획으로 이어갑니다.</div>
+        <label class="l" for="url">Instagram · TikTok · YouTube 게시물 URL</label>
+        <div class="row">
+          <input class="grow" id="url" type="url" placeholder="https://www.instagram.com/reel/…  ·  https://www.tiktok.com/@…/video/…  ·  https://www.youtube.com/shorts/…">
+          <select id="start-fit" title="대상 채널"></select>
+          <button class="btn" id="start">링크로 시작</button>
+        </div>
+        <div class="row hint">
+          <span>인스타 공개 /reel/ · /p/ 영상, 틱톡 영상(단축 링크 포함), 유튜브 롱폼·쇼츠를 지원합니다. 캐러셀·비공개 게시물은 지원하지 않습니다.</span>
+          <label><input type="checkbox" id="cookies"> 인스타 로그인 벽에 막히면 크롬 로그인 사용</label>
+        </div>
+        <div id="job-start"></div>
+      </div>
+
+      <div class="secthead">
+        <div><h3>보관함에서 찾기</h3><div class="sub">지정 키워드·계정·링크로 가져온 수집분을 함께 봅니다. 국내·해외 모두 포함합니다.</div></div>
+        <div class="row"><span class="sub" id="count"></span><button class="btn ghost sm" id="collect">유튜브 새로 수집</button></div>
+      </div>
+      <div class="card" style="padding:16px 18px;margin-bottom:0">
+        <div class="filters">
+          <div><label class="l" for="q">보관함 검색</label><input id="q" type="text" placeholder="보관함의 주제, 계정 또는 URL"></div>
+          <div><label class="l" for="f-region">국가</label><select id="f-region"><option value="">국내·해외 전체</option><option value="KR">국내</option><option value="GLOBAL">해외</option></select></div>
+          <div><label class="l" for="f-source">수집 경로</label><select id="f-source"><option value="">모든 수집 경로</option><option value="키워드">키워드 검색</option><option value="계정">지정 계정</option><option value="해시태그">해시태그</option><option value="직접 추가">링크 직접 추가</option></select></div>
+          <div><label class="l" for="f-fit">채널</label><select id="f-fit"><option value="">모든 채널</option></select></div>
+        </div>
+        <div class="tabs" id="status-tabs"></div>
+        <div id="job-collect"></div>
+      </div>
+      <div class="grid" id="grid"></div>
+    </div>
+
+    <!-- 2 화면·대본 분석 -->
+    <div data-pane="2" hidden>
+      <div class="card" id="refcard"></div>
+      <div class="card">
+        <div class="secthead"><div><h2>화면 캡처</h2><div class="sub">첫 3초는 1초마다, 이후 2초 간격입니다.</div></div></div>
+        <div class="frames" id="frames"></div>
+        <h2 style="margin-top:14px">원본 대본</h2>
+        <div class="sub" id="tr-src"></div>
+        <div class="tr" id="transcript" style="margin-top:8px"></div>
+      </div>
+      <div class="card">
+        <div class="secthead">
+          <div><h2>화면·대본 분석</h2><div class="sub">첫 3초 · 대본 구조 · 화면 분석 · 원문/번역 · 반응 인사이트</div></div>
+          <button class="btn" data-run="analysis">분석 실행</button>
+        </div>
+        <div id="job-analysis"></div>
+        <div class="md" id="md-analysis"></div>
+      </div>
+    </div>
+
+    <!-- 3 대본 5개 -->
+    <div data-pane="3" hidden>
+      <div class="card">
+        <div class="secthead">
+          <div><h2>대본 5개 비교</h2><div class="sub">원본의 구조(단위 수·역할 순서·컷 리듬)만 빌려 우리 채널 분야의 새 대본 5개를 씁니다.</div></div>
+          <div class="row"><select id="fit3" title="대상 채널"></select><button class="btn" data-run="scripts5">대본 5개 만들기</button></div>
+        </div>
+        <div class="note">의료광고법·화장품법·보험 약관 표현은 자동 점검 후에도 사람이 검수합니다. <code>[인터뷰 필요]</code> 표시는 출연자에게 직접 물어 채웁니다.</div>
+        <div id="job-scripts5"></div>
+        <div class="md" id="md-scripts5"></div>
+      </div>
+    </div>
+
+    <!-- 4 제작 기획 -->
+    <div data-pane="4" hidden>
+      <div class="card">
+        <div class="secthead">
+          <div><h2>제작 기획</h2><div class="sub">추천 대본의 컷 리스트 · 준비물 · 캡션 초안 · 첫 프레임</div></div>
+          <div class="row"><select id="st4" title="상태"></select><button class="btn" data-run="plan">제작 기획 만들기</button></div>
+        </div>
+        <div id="job-plan"></div>
+        <div class="md" id="md-plan"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 주간 63개 주제 ================= -->
+  <section id="weekly" hidden>
+    <div class="card">
+      <div class="secthead">
+        <div><h2>유튜브 주제 리서치 — 이번 회차</h2><div class="sub" id="w-sub"></div></div>
+        <select id="w-ch"></select>
+      </div>
+      <div style="overflow:auto;max-height:70vh"><table class="w" id="w-table"></table></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num = n => n == null ? '—' : n >= 1e8 ? (n/1e8).toFixed(1)+'억' : n >= 1e4 ? Math.round(n/1e4).toLocaleString()+'만' : n.toLocaleString();
+const PLAT = {youtube:'유튜브', youtube_shorts:'쇼츠', instagram:'릴스', tiktok:'틱톡'};
+const api = (p, body) => fetch(p, body ? {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)} : undefined).then(r => r.json());
+const md = t => window.marked ? marked.parse(t) : '<pre>'+esc(t)+'</pre>';
+let S = {refs:[], channels:[], statuses:[], status:'검수대기', cur:null, detail:null, step:1};
+
+function fitOptions(sel, first) {
+  sel.innerHTML = `<option value="">${first}</option>` + S.channels.map(c => `<option>${esc(c)}</option>`).join('');
+}
+function thumb(r) {
+  if (r.frame0) return `/frames/${r.id}/${r.frame0}`;
+  return (r.platform === 'youtube' || r.platform === 'youtube_shorts') && r.thumb ? r.thumb : null;
+}
+
+// ---------- 보관함 ----------
+async function loadRefs() {
+  const d = await api('/api/refs');
+  Object.assign(S, {refs:d.refs, channels:d.channels, statuses:d.statuses});
+  if (!$('#f-fit').options[1]) { fitOptions($('#f-fit'), '모든 채널'); fitOptions($('#start-fit'), '채널 미정'); fitOptions($('#fit3'), '채널 자동 선택'); }
+  $('#st4').innerHTML = S.statuses.map(s => `<option>${s}</option>`).join('');
+  if (!d.claude) $$('[data-run]').forEach(b => { b.disabled = true; b.title = 'claude CLI 가 필요합니다'; });
+  renderGrid();
+}
+function renderGrid() {
+  const q = $('#q').value.trim().toLowerCase(), rg = $('#f-region').value, src = $('#f-source').value, ft = $('#f-fit').value;
+  const base = S.refs.filter(r => (!rg || r.region === rg) && (!src || (r.source||'').startsWith(src)) && (!ft || r.fit === ft)
+    && (!q || [r.title, r.topic_ko, r.author, r.url, r.note, r.source].some(v => (v||'').toLowerCase().includes(q))));
+  const cnt = s => base.filter(r => r.status === s).length;
+  $('#status-tabs').innerHTML = [['', '전체', base.length], ...S.statuses.map(s => [s, s.replace('대기', ' 대기'), cnt(s)])]
+    .map(([s, l, n]) => `<button data-s="${s}" aria-pressed="${S.status === s}">${l} ${n}</button>`).join('');
+  $$('#status-tabs button').forEach(b => b.onclick = () => { S.status = b.dataset.s; renderGrid(); });
+  const rows = base.filter(r => !S.status || r.status === S.status);
+  $('#count').textContent = `${S.refs.length.toLocaleString()}개 수집분`;
+  $('#grid').innerHTML = rows.length ? rows.map(r => {
+    const t = thumb(r);
+    return `<button class="ref" data-id="${r.id}">
+      <div class="th">${t ? `<img loading="lazy" src="${esc(t)}" alt="">` : `<div class="ph">${PLAT[r.platform]||''} 미리보기 없음</div>`}
+        ${r.outlier ? `<span class="badge x">${r.outlier}배</span>` : ''}${r.carousel_candidate ? '<span class="badge c">캐러셀 후보</span>' : ''}
+        <span class="badge p">${PLAT[r.platform]||''} · ${r.region === 'GLOBAL' ? '해외' : '국내'}</span></div>
+      <div class="b"><div class="t">${esc(r.topic_ko || r.title || r.id)}</div>
+        <div class="m">@${esc(r.author||'—')} · ${esc(r.fit||'채널 미정')}</div>
+        <div class="m">조회 ${num(r.views)} · 좋아요 ${num(r.likes)} · 댓글 ${num(r.comments)}</div>
+        <div class="dots"><span class="${r.fetched?'on':''}">재료</span><span class="${r.analysis?'on':''}">분석</span><span class="${r.scripts5?'on':''}">대본</span><span class="${r.plan?'on':''}">기획</span></div>
+      </div></button>`;
+  }).join('') : `<div class="empty">${S.refs.length ? '조건에 맞는 레퍼런스가 없습니다.' : '보관함이 비어 있습니다. 위에 링크를 넣거나 「유튜브 새로 수집」을 눌러 주세요.'}</div>`;
+  $$('#grid .ref').forEach(b => b.onclick = () => openRef(b.dataset.id));
+}
+['q','f-region','f-source','f-fit'].forEach(id => $('#'+id).addEventListener('input', renderGrid));
+
+// ---------- 작업 로그 ----------
+function watch(jobId, box, label, onDone) {
+  box.innerHTML = `<div class="job"><div class="jh"><span>${label}</span><span class="st st-running">진행 중…</span></div><pre></pre></div>`;
+  const pre = box.querySelector('pre'), st = box.querySelector('.st');
+  const tick = async () => {
+    const j = await api('/api/job/' + jobId);
+    pre.textContent = (j.log||'').trim(); pre.scrollTop = pre.scrollHeight;
+    if (j.status === 'running') return setTimeout(tick, 1500);
+    st.className = 'st st-' + j.status; st.textContent = j.status === 'done' ? '완료' : '실패';
+    if (j.status === 'done') { setTimeout(() => { if (st.textContent === '완료') box.innerHTML = ''; }, 2500); }
+    onDone && onDone(j.status === 'done');
+  };
+  tick();
+}
+
+// ---------- 단계 이동 ----------
+function go(step) {
+  S.step = step;
+  $$('.steps button').forEach(b => b.setAttribute('aria-selected', b.dataset.step == step));
+  $$('[data-pane]').forEach(p => p.hidden = p.dataset.pane != step);
+  scrollTo({top:0});
+}
+$$('.steps button').forEach(b => b.onclick = () => go(+b.dataset.step));
+function syncSteps() {
+  const d = S.detail, has = !!d;
+  const en = {2: has, 3: has && !!d.analysis, 4: has && !!d.scripts5};
+  $$('.steps button').forEach(b => {
+    const n = +b.dataset.step; if (n > 1) b.disabled = !en[n];
+    b.classList.toggle('done', has && ((n === 1) || (n === 2 && !!d.analysis) || (n === 3 && !!d.scripts5) || (n === 4 && !!d.plan)));
+  });
+}
+
+async function openRef(id, stay) {
+  S.cur = id;
+  const d = S.detail = await api('/api/ref/' + id);
+  const r = d.ref || {}, m = d.meta || {};
+  if (!d.meta.id && !stay) {            // 재료가 아직 없으면 내려받기부터
+    go(1); return startFetch(id);
+  }
+  const t = d.frames[0] ? `/frames/${id}/${d.frames[0]}` : thumb(r);
+  $('#refcard').innerHTML = `<div class="refhead">
+    <div class="th">${t ? `<img src="${esc(t)}" alt="">` : '<div class="ph">미리보기 없음</div>'}</div>
+    <div><div class="sub">${PLAT[r.platform]||''} · ${r.region === 'GLOBAL' ? '해외' : '국내'} · ${esc(r.source||'')}</div>
+      <h2 style="margin:4px 0">${esc(r.topic_ko || m.title || r.title || id)}</h2>
+      <div class="sub">@${esc(m.author || r.author || '—')} · 업로드 ${esc(m.uploaded || r.uploaded || '—')} · 길이 ${m.duration ? Math.round(m.duration)+'초' : '—'}</div>
+      <div class="stats">
+        <div><b>${num(m.views ?? r.views)}</b><span>조회</span></div><div><b>${num(m.likes ?? r.likes)}</b><span>좋아요</span></div>
+        <div><b>${num(m.comments ?? r.comments)}</b><span>댓글</span></div><div><b>${r.outlier ? r.outlier+'배' : '—'}</b><span>평소 대비</span></div>
+        <div><b>${r.engagement != null ? (r.engagement*100).toFixed(1)+'%' : '—'}</b><span>참여율</span></div>
+      </div>
+      <div class="sub">${esc(r.judge||'')}</div>
+      <div class="row" style="margin-top:12px"><a class="btn ghost sm" href="${esc(r.url || m.url || '#')}" target="_blank" rel="noopener">원본 열기</a>
+        <button class="btn ghost sm" id="refetch">재료 다시 받기</button><span id="job-refetch" style="flex-basis:100%"></span></div>
+    </div></div>`;
+  $('#refetch').onclick = () => startFetch(id, $('#job-refetch'));
+  const sec = f => { const k = f[0], n = parseInt(f.slice(2), 10); return k === 'f' ? n - 1 : 3 + (n - 1) * 2; };
+  $('#frames').innerHTML = d.frames.length ? d.frames.map(f => `<figure><img loading="lazy" src="/frames/${id}/${f}" alt=""><figcaption>${sec(f)}초</figcaption></figure>`).join('')
+    : '<div class="sub">화면 캡처가 없습니다. 「재료 다시 받기」를 눌러 주세요.</div>';
+  $('#tr-src').textContent = `출처: ${m.transcript_source || '없음'} · ${d.transcript.length}줄`;
+  $('#transcript').innerHTML = d.transcript.length ? d.transcript.map(s => `<div><time>${String(Math.floor(s.start/60)).padStart(2,'0')}:${String(Math.floor(s.start%60)).padStart(2,'0')}</time><span>${esc(s.text)}</span></div>`).join('')
+    : '<div class="sub" style="display:block">자막이 없습니다. 분석 단계에서 화면 속 자막으로 대본을 복원합니다.</div>';
+  for (const k of ['analysis','scripts5','plan']) {
+    $('#md-'+k).innerHTML = d[k] ? md(d[k]) : `<div class="empty">아직 만들지 않았습니다.</div>`;
+    const b = $(`[data-run="${k}"]`); b.textContent = (d[k] ? '다시 ' : '') + {analysis:'분석 실행', scripts5:'대본 5개 만들기', plan:'제작 기획 만들기'}[k];
+  }
+  $('#fit3').value = r.fit || ''; $('#st4').value = r.status || '검수대기';
+  syncSteps();
+  if (!stay) go(2);
+}
+
+function startFetch(idOrUrl, box) {
+  const body = {url: idOrUrl, fit: $('#start-fit').value, cookies: $('#cookies').checked};
+  api('/api/start', body).then(j => {
+    if (j.error) return (box || $('#job-start')).innerHTML = `<div class="note">${esc(j.error)}</div>`;
+    watch(j.job, box || $('#job-start'), '레퍼런스 가져오는 중', async ok => { await loadRefs(); if (ok) openRef(j.ref); });
+  });
+}
+$('#start').onclick = () => { const u = $('#url').value.trim(); if (u) startFetch(u); };
+$('#url').addEventListener('keydown', e => { if (e.key === 'Enter') $('#start').click(); });
+$('#collect').onclick = () => api('/api/collect', {fit: $('#f-fit').value, region: $('#f-region').value}).then(j =>
+  watch(j.job, $('#job-collect'), '유튜브 레퍼런스 수집 중 (채널 전체는 10분 이상 걸립니다)', loadRefs));
+
+$$('[data-run]').forEach(b => b.onclick = () => {
+  const step = b.dataset.run, id = S.cur; if (!id) return;
+  b.disabled = true;
+  api('/api/step', {id, step, fit: $('#fit3').value}).then(j => {
+    if (j.error) { b.disabled = false; return $('#job-'+step).innerHTML = `<div class="note">${esc(j.error)}</div>`; }
+    watch(j.job, $('#job-'+step), b.textContent + ' — Claude Code 실행 중', async () => { b.disabled = false; await loadRefs(); if (S.cur === id) openRef(id, true); });
+  });
+});
+$('#fit3').onchange = () => S.cur && $('#fit3').value && api('/api/set', {id:S.cur, fit:$('#fit3').value}).then(loadRefs);
+$('#st4').onchange = () => S.cur && api('/api/set', {id:S.cur, status:$('#st4').value}).then(loadRefs);
+
+// ---------- 주간 63개 주제 ----------
+let W = null;
+async function loadWeekly() {
+  W = await api('/api/weekly');
+  const chs = Object.keys(W.channels);
+  $('#w-ch').innerHTML = (W.csv ? '<option value="__csv">확정 63개 (CSV)</option>' : '') + chs.map(c => `<option value="${esc(c)}">${esc(c)} 후보 ${W.channels[c].length}개</option>`).join('');
+  $('#w-sub').textContent = chs.length ? `리서치 후보 ${chs.reduce((n,c) => n + W.channels[c].length, 0)}개 · ` + (W.csv ? `확정 파일 ${W.csv.name}` : '아직 63개를 확정하지 않았습니다') : '이번 회차 리서치 결과가 아직 없습니다 (work/out/cand_*.json).';
+  renderWeekly();
+}
+function renderWeekly() {
+  const v = $('#w-ch').value, T = $('#w-table');
+  if (!v) return T.innerHTML = '';
+  if (v === '__csv') {
+    const h = W.csv.header.slice(0, 9);
+    return T.innerHTML = '<tr>' + h.map(x => `<th>${esc(x)}</th>`).join('') + '</tr>' + W.csv.rows.map(r => '<tr>' + r.slice(0, 9).map((c, i) => `<td>${i === 5 ? `<span class="pill ${c === '숏폼' ? 's' : ''}">${esc(c)}</span>` : esc(c)}</td>`).join('') + '</tr>').join('');
+  }
+  T.innerHTML = '<tr><th>No</th><th>주제(가제)</th><th>형식</th><th>카테고리</th><th>키워드</th><th>벤치마크 근거</th><th>핵심 스토리라인</th></tr>' +
+    W.channels[v].map(c => `<tr><td>${c.No}</td><td><b>${esc(c['주제'])}</b></td><td><span class="pill ${c['형식'] === '숏폼' ? 's' : ''}">${esc(c['형식'])}</span><br><span class="sub">${esc(c['권장 길이'])}</span></td><td>${esc(c['카테고리'])}</td><td>${esc(c['키워드'])}</td><td>${esc(c['벤치마크 근거'])}</td><td>${esc(c['핵심 스토리라인'])}</td></tr>`).join('');
+}
+$('#w-ch').onchange = renderWeekly;
+function mode(m) {
+  $('#studio').hidden = m !== 'studio'; $('#weekly').hidden = m !== 'weekly';
+  $('#mode-studio').setAttribute('aria-pressed', m === 'studio'); $('#mode-weekly').setAttribute('aria-pressed', m === 'weekly');
+  if (m === 'weekly') loadWeekly();
+}
+$('#mode-studio').onclick = () => mode('studio'); $('#mode-weekly').onclick = () => mode('weekly');
+
+loadRefs();
+</script>
+</body>
+</html>
